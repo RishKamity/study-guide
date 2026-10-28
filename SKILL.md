@@ -88,7 +88,7 @@ Fix all HIGH and MED findings and re-run validate + smoke. (In the ACCT 200 buil
 
 ## Phase 8: Audio (Full tier)
 
-`bash tools/audio/render.sh courses/<id>` (voice am_michael). Scripts come from the stations, so audio can never contradict the lessons. It takes roughly the audio's length in CPU time (about an hour for 70 minutes); run it in the background while you do Phase 7, and re-run it for any station you change afterwards (finished tracks are skipped; delete a track's `audio/wav/<id>.wav` to redo it). Then add `"audio": "audio/tracks.js"` to `pack.json` and rebuild.
+`bash tools/audio/render.sh courses/<id>` (voice am_michael). Scripts come from the stations, so audio can never contradict the lessons. On a machine with an NVIDIA GPU (the student's own PC, through the device tools, if it has one) it installs onnxruntime-gpu and takes minutes. On CPU it runs one part per core and takes roughly the audio's length on 2 cores (about an hour for 70 minutes), less with more cores. Run it in the background while you do Phase 7, and re-run it for any station you change afterwards (finished tracks are skipped; delete a track's `audio/wav/<id>.wav` to redo it). Then add `"audio": "audio/tracks.js"` to `pack.json` and rebuild.
 
 ## Phase 9: Publish
 

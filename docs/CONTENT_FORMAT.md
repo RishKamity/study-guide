@@ -167,4 +167,4 @@ A.FOUNDATION = ['g:B2:skill:seed', ...];   // optional fixed boot-camp check (it
 
 ## Audio (Full tier)
 
-`bash tools/audio/render.sh courses/<id>`: writes scripts from the stations, normalizes them for speech, renders MP3s with Kokoro (voice am_michael), and writes `audio/tracks.js`. Add `"audio": "audio/tracks.js"` to `pack.json`, rebuild, and publish each `audio/mp3/<id>.mp3` as `audio/<id>.mp3` beside the page. Add `audio/lexicon.json` for course acronyms (`{"PCAOB": "P-C-A-O-B"}`).
+`bash tools/audio/render.sh courses/<id>`: writes scripts from the stations, normalizes them for speech, renders MP3s with Kokoro (voice am_michael), and writes `audio/tracks.js`. It uses an NVIDIA GPU when there is one (installing onnxruntime-gpu; set `AUDIO_CPU=1` to skip) and otherwise one parallel part per CPU core (`AUDIO_PARTS=N` to override). Add `"audio": "audio/tracks.js"` to `pack.json`, rebuild, and publish each `audio/mp3/<id>.mp3` as `audio/<id>.mp3` beside the page. Add `audio/lexicon.json` for course acronyms (`{"PCAOB": "P-C-A-O-B"}`).

@@ -1,0 +1,6 @@
+{
+  "course": "course.js",
+  "files": ["gens/gens.js", "content/stations.js", "content/banks.js", "content/sample.js", "content/extras.js"],
+  "flashcards": "content/flashcards.json",
+  "reference": "reference.md"
+}

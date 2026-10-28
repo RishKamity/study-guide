@@ -1,0 +1,14 @@
+[
+ {"id": "1.1", "ch": 1, "front": "Law of demand", "back": "Price up, quantity demanded down (other things equal)."},
+ {"id": "1.2", "ch": 1, "front": "Normal vs. inferior good", "back": "Normal: demand rises with income. Inferior: demand falls with income."},
+ {"id": "1.3", "ch": 1, "front": "Substitutes vs. complements", "back": "Substitutes: higher price of one raises demand for the other. Complements: lowers it."},
+ {"id": "1.4", "ch": 1, "front": "Five demand shifters", "back": "Income, prices of related goods, tastes, expectations, number of buyers."},
+ {"id": "1.5", "ch": 1, "front": "Supply shifters", "back": "Input prices, technology, expectations, number of sellers, taxes and subsidies."},
+ {"id": "1.6", "ch": 1, "front": "Binding ceiling vs. floor", "back": "Ceiling below equilibrium: shortage. Floor above equilibrium: surplus."},
+ {"id": "2.1", "ch": 2, "front": "Fixed cost", "back": "Cost that does not change with output; total cost at zero output."},
+ {"id": "2.2", "ch": 2, "front": "Marginal cost", "back": "The change in total cost from producing one more unit."},
+ {"id": "2.3", "ch": 2, "front": "Where MC crosses ATC", "back": "At the minimum point of ATC."},
+ {"id": "2.4", "ch": 2, "front": "Profit-maximizing rule", "back": "Produce where marginal revenue equals marginal cost."},
+ {"id": "2.5", "ch": 2, "front": "Short-run shutdown rule", "back": "Shut down if price is below average variable cost."},
+ {"id": "2.6", "ch": 2, "front": "Monopoly vs. competition outcome", "back": "Monopoly: higher price, lower quantity, deadweight loss."}
+]

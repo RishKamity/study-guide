@@ -1,0 +1,14 @@
+node_modules/
+dist/
+# course packs built from real class materials stay private (instructor content, sample exams)
+courses/*
+!courses/demo/
+**/*.mp3
+**/*.wav
+courses/*/qa/
+courses/*/shots/
+courses/*/audio/wav/
+courses/*/audio/mp3/
+courses/*/audio/*.log
+tests/shots/
+courses/demo/audio/

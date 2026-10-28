@@ -12,3 +12,4 @@ courses/*/audio/mp3/
 courses/*/audio/*.log
 tests/shots/
 courses/demo/audio/
+__pycache__/

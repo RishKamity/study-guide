@@ -81,8 +81,9 @@ Smoke walks every lesson on a phone-size screen. Treat its warnings (tables that
 ## Phase 7: Independent review (Full tier; recommended for Standard)
 
 Spawn two fresh agents that have not seen your work, giving them only the course files and exported content (never your answer key):
-1. **Blind answers.** Export ~60 generated + bank items (2 per topic) without keys to a scratch file; the agent answers each from the course files, flags ambiguous items, and writes JSON. Compare with your key; investigate every mismatch and every flag.
-2. **Lesson audit.** Export all stations to markdown; the agent checks every rule, number, worked step (in Python) and quote against the course files and returns a table: topic | quoted text | what the course file says | HIGH/MED/LOW | fix.
+`node tools/review_export.mjs courses/<id> <scratchDir> 3` writes the keyless questions (`items_blind.json`) and the lessons (`lessons.md`); the key stays in `courses/<id>/qa/`.
+1. **Blind answers.** The agent answers each question from the course files, flags ambiguous items, and writes `[{n, answer, confidence, flag}]` JSON. Run `node tools/review_compare.mjs courses/<id> <answers.json>` and investigate every mismatch and every flag.
+2. **Lesson audit.** Give the agent `lessons.md`; the agent checks every rule, number, worked step (in Python) and quote against the course files and returns a table: topic | quoted text | what the course file says | HIGH/MED/LOW | fix.
 Fix all HIGH and MED findings and re-run validate + smoke. (In the ACCT 200 build this caught a lesson that contradicted the notes packet.)
 
 ## Phase 8: Audio (Full tier)
@@ -118,6 +119,7 @@ Tell the student in 3-6 lines: what the guide has (tier, number of topics, quest
 - **Fixed calendar blocks break** the moment the student starts late. The engine re-plans from "now"; never hard-code dates into the content.
 - **A lesson contradicted the notes packet** (freight-out) until an independent reviewer caught it. Always run Phase 7 on Full.
 - **A practice question nearly copied a sample exam question.** Validate's leak check exists for this; never write questions while looking at the sample.
+- **Class notes overrode the official worksheet.** The ACCT 200 build re-weighted topics from the student's notes when the instructor's review worksheet already had exact counts. The worksheet wins; notes fill gaps.
 - **Paraphrases were labeled as quotes.** Only verbatim transcript fragments go in quote marks.
 - **Answers you cannot verify in code get checked by hand against the official solution**, and disagreements go in `CONFLICTS.md` with your reasoning.
 - **Look at the screenshots.** A layout bug hid every bottom button under the tab bar on phones; tests that only read text did not catch it.

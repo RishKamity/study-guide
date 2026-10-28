@@ -29,6 +29,10 @@ A.mc = function (o) {
     var t = f(w[0]); var k = _key(t);
     if (seen[k]) return; seen[k] = 1; pool.push({ t: t, v: w[0], why: w[1] || null });
   });
+  if (pool.length < 3 && o.pad && typeof o.correct === 'number') {
+    /* top up with plausible near-misses (correct +/- k*pad), never negative, never duplicates */
+    for (var k = 1; pool.length < 3 && k < 12; k++) [o.correct + k * o.pad, o.correct - k * o.pad].forEach(function (v) { if (pool.length >= 3 || v < 0 && !o.allowNeg) return; var t = f(v), kk = _key(t); if (!seen[kk]) { seen[kk] = 1; pool.push({ t: t, v: v, why: 'Recheck the arithmetic.' }); } });
+  }
   if (pool.length < 3) throw new Error('not enough distinct distractors for ' + o.topic + '.' + o.skill + ' (' + pool.length + ')');
   if (o.keepFirst) { pool = pool.slice(0, 3); }
   else if (rng) { pool = rng.shuffle(pool).slice(0, 3); } else pool = pool.slice(0, 3);
@@ -134,5 +138,6 @@ A.numItem = function (rng, topic, skill, o) {
 };
 /* journal-entry pick (accounting): o = {stem, good:[[acct, dr, cr]...], bad:[[lines, why]...] (3+), rule, diff} — every entry must balance */
 A.jePick = function (rng, topic, skill, o) {
-  return A.mc({ rng: rng, topic: topic, skill: skill, format: 'je-pick', optJe: true, fmt: function (v) { return A.jeStr(v); }, stem: o.stem, table: o.table || null, correct: o.good, keepFirst: true, wrong: o.bad, rule: o.rule, work: o.work || A.jeStr(o.good), je: o.good, diff: o.diff || 2, seconds: o.sec || 50, calc: !!o.calc, check: function () { return A.jeStr(o.good); } });
+  var bad = o.bad.length > 3 ? rng.shuffle(o.bad) : o.bad;  /* give 4+ wrong entries for variety; 3 are used */
+  return A.mc({ rng: rng, topic: topic, skill: skill, format: 'je-pick', optJe: true, fmt: function (v) { return A.jeStr(v); }, stem: o.stem, table: o.table || null, correct: o.good, keepFirst: true, wrong: bad, rule: o.rule, work: o.work || A.jeStr(o.good), je: o.good, diff: o.diff || 2, seconds: o.sec || 50, calc: !!o.calc, check: function () { return A.jeStr(o.good); } });
 };

@@ -77,6 +77,13 @@ examTopics.forEach(t => {
   if (!gens && bank < 15) (bank < 8 ? FAIL : WARN)(`topic ${t.id}: only ${bank} hand-written questions and no generator (aim for 15+, or add a generator)`);
 });
 
+/* ---- phone-friendliness and config keys ---- */
+A.TOPICS.forEach(t => { if (t.title && t.title.length > 48) WARN(`topic ${t.id}: title is ${t.title.length} characters; it wraps to 3 lines on phones (aim for 48 or fewer)`); });
+Object.keys(C.skillWeights || {}).forEach(k => { if (!A.skills[k]) FAIL(`course.js skillWeights: "${k}" is not a skill (use topic.skill, e.g. ${Object.keys(A.skills)[0]})`); });
+Object.keys(C.weights || {}).forEach(k => { if (!A.TOPIC[k]) FAIL(`course.js weights: "${k}" is not a topic id`); });
+const wideT = []; for (const [id, s] of Object.entries(A.STATIONS)) (s.cards || []).forEach(c => { const v = c.visual; if (v && v.type === 'table' && v.head && v.head.length > 4) wideT.push(id); });
+if (wideT.length) WARN(`stations with tables wider than 4 columns (they scroll sideways on phones): ${[...new Set(wideT)].join(', ')}`);
+
 /* ---- stations ---- */
 if (A.FEAT.stations) examTopics.forEach(t => {
   const s = A.STATIONS[t.id]; if (!s) { FAIL(`station ${t.id}: missing (tier ${C.tier} needs a lesson per exam topic)`); return; }
@@ -100,6 +107,9 @@ if (A.SAMPLE_READY) {
   for (const t of Object.keys(A.banks)) A.banks[t].forEach((s, i) => texts.push(['bank ' + t + '#' + i, s.q + ' ' + s.a + ' ' + (s.w || []).join(' ') + ' ' + (s.work || '')]));
   for (const [id, s] of Object.entries(A.STATIONS)) texts.push(['station ' + id, JSON.stringify(s)]);
   (A.FLASHCARDS || []).forEach(c => { if (!c.sample) texts.push(['flashcard ' + c.id, c.front + ' ' + c.back]); });
+  /* generator output (30 seeds per skill) and the reference sheet are practice material too */
+  for (const topic of Object.keys(A.gens)) for (const skill of Object.keys(A.gens[topic])) for (let sd = 1; sd <= 30; sd++) { try { const it = A.makeItem(A.genId(topic, skill, sd * 104729 + 7)); texts.push([`generator ${topic}.${skill}`, it.stem + ' ' + it.options.join(' ') + ' ' + (it.table ? JSON.stringify(it.table) : '')]); } catch (e) {} }
+  if (K.P.reference && fs.existsSync(path.join(K.dir, K.P.reference))) texts.push(['reference.md', fs.readFileSync(path.join(K.dir, K.P.reference), 'utf8')]);
   let leaks = 0;
   texts.forEach(([where, txt]) => {
     const g = grams(txt); for (const x of g) if (sampleGrams.has(x)) { leaks++; if (leaks <= 8) FAIL(`sample leak: ${where} repeats sample wording "${x}"`); break; }
@@ -127,6 +137,6 @@ catch (e) { FAIL('schedule: ' + e.message); }
 if (A.FEAT.audio && (A.AUDIO || []).length) { A.AUDIO.forEach(t => { if (!t.id || !t.title || !Array.isArray(t.raw) || !t.spoken) FAIL(`audio ${t.id}: needs id, title, raw[], spoken`); }); OK(`audio: ${A.AUDIO.length} tracks`); }
 else if (A.FEAT.audio) WARN('tier has audio but there are no tracks yet (run tools/audio)');
 
-out.forEach(l => console.log(l));
+[...new Set(out)].forEach(l => console.log(l));
 console.log(`\n${fails ? 'FAIL' : 'PASS'}: ${fails} failure(s), ${warns} warning(s) for ${C.title}`);
 process.exit(fails ? 1 : 0);

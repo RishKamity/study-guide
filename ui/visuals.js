@@ -35,7 +35,7 @@ U.visual = function (v) {
   else if (t === 'icons') w.appendChild(U.h('div', { class: 'icons3' }, v.items.map(function (i) { return U.h('div', null, U.h('div', { html: ICONS[i.k] || '' }), U.h('b', null, i.t), U.h('span', null, i.d)); })));
   else if (t === 'tri') {
     var c = v.corners, col = function (x) { return x.hl ? 'var(--accent)' : 'var(--text-2)'; };
-    var svg = '<svg class="tri" viewBox="0 0 400 270" role="img" aria-label="Fraud triangle"><polygon points="200,18 40,238 360,238" fill="color-mix(in srgb,var(--accent) 8%,transparent)" stroke="var(--line)" stroke-width="2"/>' +
+    var svg = '<svg class="tri" viewBox="0 0 400 270" role="img" aria-label="' + (v.label || 'Triangle diagram').replace(/"/g, '') + '"><polygon points="200,18 40,238 360,238" fill="color-mix(in srgb,var(--accent) 8%,transparent)" stroke="var(--line)" stroke-width="2"/>' +
       '<g font-family="Sora,sans-serif" text-anchor="middle"><text x="200" y="70" fill="' + col(c[0]) + '" font-weight="700" font-size="17">' + c[0].t + '</text><text x="200" y="90" fill="var(--text-2)" font-size="12">' + c[0].d + '</text>' +
       '<text x="96" y="210" fill="' + col(c[1]) + '" font-weight="700" font-size="16">' + c[1].t + '</text><text x="96" y="228" fill="var(--text-2)" font-size="11">' + c[1].d + '</text>' +
       '<text x="304" y="210" fill="' + col(c[2]) + '" font-weight="700" font-size="16">' + c[2].t + '</text><text x="304" y="228" fill="var(--text-2)" font-size="11">' + c[2].d + '</text></g></svg>';

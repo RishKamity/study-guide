@@ -244,6 +244,7 @@ A.sampleUnlock = function (st, now) {
   if (st.sample && st.sample.unlocked) return { ok: true, why: 'Unlocked' };
   var best = 0; ['mockA', 'mockB'].forEach(function (k) { var m = st.mocks[k]; if (m && m.submittedAt) best = Math.max(best, m.score / m.total); });
   if (best >= 0.8) return { ok: true, why: 'Mock score of ' + Math.round(best * 100) + '%' };
+  var nx = A.nextSeq ? A.nextSeq(st, now) : null; if (nx && nx.item.type === 'sample') return { ok: true, why: 'You reached the dress rehearsal on your plan' };
   var when = new Date(A.SAMPLE_UNLOCK_AT).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
   if (now >= A.SAMPLE_UNLOCK_AT) return { ok: true, why: 'It is after ' + when };
   return { ok: false, why: 'Unlocks when you score 80% or more on Mock A or B, or at ' + when + '.' };

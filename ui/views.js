@@ -146,13 +146,14 @@
   } };
 
   U.views.ref = { tab: 'ref', hash: 'ref', render: function (main) {
-    var box = h('div', { class: 'ref', html: A.REF_HTML || '<p>Not available.</p>' }), q = h('input', { type: 'search', placeholder: 'Filter the sheet (e.g. NSF, petty, FIFO)', 'aria-label': 'Filter the sheet' });
+    var RF = A.COURSE.ref || {};
+    var box = h('div', { class: 'ref', html: A.REF_HTML || '<p>Not available.</p>' }), q = h('input', { type: 'search', placeholder: 'Filter the sheet' + (RF.hint ? ' (e.g. ' + RF.hint + ')' : ''), 'aria-label': 'Filter the sheet' });
     q.addEventListener('input', function () {
       var v = q.value.trim().toLowerCase();
       Array.prototype.forEach.call(box.querySelectorAll('tbody tr'), function (r) { r.classList.toggle('hide', !!v && r.textContent.toLowerCase().indexOf(v) < 0); });
     });
     box.querySelectorAll('table').forEach(function (t) { var w = document.createElement('div'); w.className = 'tw'; t.parentNode.insertBefore(w, t); w.appendChild(t); });
-    main.appendChild(h('div', { class: 'stack' }, h('h1', { class: 'h1' }, 'Formula and journal entry sheet'), h('p', { class: 'muted small' }, 'Built from the Ch 4 to 7 notes packets and extra practice. Use it as a reference while you study, then practice recalling it.'), q, box, h('button', { class: 'btn ghost', onclick: function () { U.go('sheet'); } }, 'Open the walk-in sheet'), U.dataCard()));
+    main.appendChild(h('div', { class: 'stack' }, h('h1', { class: 'h1' }, RF.title || 'Reference sheet'), h('p', { class: 'muted small' }, RF.blurb || 'Built from your course files. Use it as a reference while you study, then practice recalling it.'), q, box, A.FEAT.drills && A.SHEET ? h('button', { class: 'btn ghost', onclick: function () { U.go('sheet'); } }, 'Open the walk-in sheet') : null, U.dataCard()));
   } };
 
   U.views.mock = { tab: 'mock', hash: 'mock', live: true, render: function (main) {

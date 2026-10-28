@@ -24,3 +24,9 @@ p = A.plan(E - 10 * 60000, A.store.state); ok(p.slots.every(s => !s.start), 'aft
 const T1 = A.TOPICS.find(t => t.exam && A.UNITS.indexOf(t.ch) >= 0).id; A.store.state.settings.skimmed = { [T1]: 1 }; p = A.plan(E - 3 * 24 * H, A.store.state); const s4a = p.slots.find(s => s.item.id === T1);
 ok(s4a && s4a.skim, T1 + ' stays "practice only" once started as a skim, even with plenty of time');
 console.log(fails ? 'FAIL ' + fails : 'PASS');
+// the sealed sample opens once the student reaches the dress rehearsal on the plan
+{ const B = loadA(), st = B.store.state, E2 = B.EXAM_AT;
+  B.SEQ.forEach(it => { if (it.optional || it.type === 'sample' || it.protect) return; if (it.type === 'station') st.stations[it.id] = { step: 7 }; if (it.type === 'minimock' || it.type === 'mock') st.mocks[it.id] = { submittedAt: 1, score: 5, total: 10 }; if (it.type === 'misses') st.misses = { x: { done: true } }; if (it.type === 'drill') {} });
+  const nx = B.nextSeq(st, E2 - 2 * 864e5); const u = B.sampleUnlock(st, E2 - 2 * 864e5);
+  const hasSample = B.SEQ.some(i => i.type === 'sample');
+  console.log((!hasSample || (nx && nx.item.type === 'sample' && u.ok)) ? 'ok  ' : 'FAIL', 'sample unlocks on reaching the dress rehearsal: ' + (u.why || '')); if (hasSample && !(nx && nx.item.type === 'sample' && u.ok)) process.exitCode = 1; }

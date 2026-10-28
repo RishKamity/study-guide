@@ -25,6 +25,12 @@
       });
     }
     out.sort(function (x, y) { return x.start - y.start; });
+    /* the student's own start time and daily hour budget */
+    if (S.start) { var s0 = Date.parse(S.start); out = out.filter(function (w) { return w.end > s0; }); out.forEach(function (w) { if (w.start < s0) w.start = s0; }); }
+    if (S.hoursPerDay) {
+      var used = {}, cap = S.hoursPerDay * 60;
+      out = out.filter(function (w) { var k = new Date(w.planned ? w.planned[0] : w.start).toDateString(), u = used[k] || 0, len = (w.end - w.start) / 60000; if (u >= cap) return false; if (u + len > cap) w.end = w.start + (cap - u) * 60000; used[k] = u + (w.end - w.start) / 60000; return true; });
+    }
     /* studying outside a window during the day: treat the next 90 minutes as an extra session */
     var hr = new Date(now).getHours(), inWin = out.length && out[0].start <= now;
     if (!inWin && hr >= 7 && hr < 23 && now < stop) {

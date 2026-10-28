@@ -65,6 +65,10 @@ A.TOPICS = [
 ];
 ```
 
+**Schedule.** `windows` are daily study hours (local time). `hoursPerDay` caps each day (use it for "I have about 10 hours": hours / days left). `start` (ISO) delays the plan until the student begins. `stopBeforeExam` minutes before the exam nothing is planned. The plan re-builds from "now" on every visit and trims low-weight topics when time runs short; it never drops the dress rehearsal.
+
+**Reference tab.** `ref: { title: 'Formula and journal entry sheet', blurb: 'Built from ...', hint: 'NSF, petty, FIFO' }` (all optional).
+
 **Tier switches** (`engine/course.js`):
 
 | feature | quick | standard | full |
@@ -77,6 +81,8 @@ A.TOPICS = [
 | daily puzzle | opt-in | opt-in | opt-in |
 
 Quick-tier topics appear on the Path as practice drills ("done" after 6 answers).
+
+**Which extras each tier shows.** Quick: practice, reference sheet. Standard: + lessons, mocks, sealed sample. Full: + flashcards, twins, true/false traps, walk-in sheet (`A.SHEET`), calc sprint, JE builder, weak spots, misses, audio, AI tutor, sync. Content for a feature the tier hides is simply unused, so skip writing it.
 
 **Blueprint rule:** the integer `exam` counts of the unit topics should sum to `format.questions`. They drive the mocks. `weights` (fractional) drive the predicted score and practice emphasis; use them when the notes say "4 to 5 questions".
 
@@ -96,10 +102,22 @@ A.defGen('1B', 'eqp', 'Equilibrium price from equations', function (rng) {
 });
 ```
 - Numbers come from code, never typed by hand. Keep them calculator-friendly (round intermediate values).
+- **Distractor rules (A.mc):** wrong values that are negative, non-finite, or format to the same text as another option are dropped silently; if fewer than 3 survive it throws. Give 4-5 real mistakes, or pass `pad: <step>` to top up with near-misses (correct ± step). Options must also differ after formatting (two values that round to the same $ text count as duplicates).
+- **Rounding:** use `A.round2(x)` (round half up to cents) for every money value, in the key, the distractors and `check()` alike, so they never disagree by half a cent. Prefer parameters that make answers whole dollars.
 - `check()` must recompute the key independently; `validate.mjs` fails any seed where they disagree.
 - Numeric options are sorted ascending automatically (like a printed exam).
-- Helpers: `A.numItem(rng, topic, skill, {stem, ans, wrong, pad, rule, work})` pads numeric distractors; `A.jePick(rng, topic, skill, {stem, good, bad, rule})` builds a pick-the-journal-entry item (accounting) where every entry must balance; set `jeBuilder: true` in course.js to unlock the JE builder drill.
+- Helpers: `A.numItem(rng, topic, skill, {stem, ans, wrong, pad, rule, work})` pads numeric distractors; `A.jePick(rng, topic, skill, {stem, good, bad, rule})` builds a pick-the-journal-entry item (accounting): give 4+ wrong entries (3 are picked at random), and make every entry balance; set `jeBuilder: true` in course.js to unlock the JE builder drill.
 - Never use the sample exam's numbers or wording.
+
+### Course-example test (`qa/course_examples.mjs`)
+
+Reproduce the instructor's worked examples through your generators' math so a formula slip shows up before a student sees it:
+```js
+import { loadA } from '../../../tests/load.mjs';          // run with: COURSE=courses/<id> node courses/<id>/qa/course_examples.mjs
+const A = loadA(); let bad = 0; const eq = (got, want, what) => { if (Math.abs(got - want) > 0.005) { bad++; console.log('FAIL', what, got, '!=', want); } };
+eq(A.CALC.fifoCogs([[300, 12], [100, 13], [400, 16]], 550), 7300, 'FIFO COGS, notes packet Ex. 2');   // expose your generator math as A.CALC.*
+console.log(bad ? 'FAIL' : 'PASS'); process.exit(bad ? 1 : 0);
+```
 
 ## Banks (`A.defBank`)
 

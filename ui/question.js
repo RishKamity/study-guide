@@ -38,7 +38,7 @@ U.question = function (item, o) {
     if (o.pretest) banner = U.h('div', { class: 'callout' }, 'Pretest: not graded. Seeing the answer first makes the lesson stick.');
     else if (res.correct && conf === 2) banner = U.h('div', { class: 'callout warn' }, 'Right, but you guessed. It will come back once so it is earned.');
     else if (res.correct) banner = U.h('div', { class: 'callout good' }, 'Correct.' + (conf === 1 ? ' You were unsure, so it comes back once.' : ''));
-    else if (conf === 0) banner = U.h('div', { class: 'callout bad' }, 'You were sure, and it was wrong. These are the dangerous ones. It is pinned to your walk-in sheet and returns soon.');
+    else if (conf === 0) banner = U.h('div', { class: 'callout bad' }, A.FEAT.drills ? 'You were sure, and it was wrong. These are the dangerous ones. It is pinned to your walk-in sheet and returns soon.' : 'You were sure, and it was wrong. These are the dangerous ones. It comes back soon.');
     else banner = U.h('div', { class: 'callout bad' }, 'Not yet. Read the rule and the work, then it returns in a few questions.');
     after.appendChild(U.h('div', { class: 'stack' }, banner, U.revealBlock(item, sel), (!o.pretest && U.aiWhy && A.FEAT.ai) ? U.aiWhy(item, sel) : null,
       o.onNext ? U.h('button', { class: 'btn block', type: 'button', onclick: function () { o.onNext(); } }, o.nextLabel || 'Next') : null));

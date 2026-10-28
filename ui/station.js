@@ -71,7 +71,7 @@ U.views.station = { tab: 'path', render: function (main, p) {
   function worked() {
     var W = S.worked, i = 0; U.clear(stage);
     var list = U.h('div', { class: 'stack' }), btnRow = U.h('div');
-    stage.appendChild(U.h('div', { class: 'card stack' }, title('Worked example · ' + W.title, 'Read each step and ask yourself why it is the next step.'), U.h('div', { class: 'callout' }, W.setup), list));
+    stage.appendChild(U.h('div', { class: 'card stack' }, title(/^worked example/i.test(W.title) ? W.title : 'Worked example · ' + W.title, 'Read each step and ask yourself why it is the next step.'), U.h('div', { class: 'callout' }, W.setup), list));
     stage.appendChild(btnRow);
     function more() {
       list.appendChild(stepCard(W.steps[i], i, W.steps.length)); i++; U.clear(btnRow);
@@ -82,7 +82,7 @@ U.views.station = { tab: 'path', render: function (main, p) {
   function faded() {
     var F = S.faded, i = 0; U.clear(stage);
     var list = U.h('div', { class: 'stack' }), area = U.h('div');
-    stage.appendChild(U.h('div', { class: 'card stack' }, title('Your turn · ' + F.title, 'The same idea with fewer hints. Answer each step.'), U.h('div', { class: 'callout' }, F.setup), list)); stage.appendChild(area);
+    stage.appendChild(U.h('div', { class: 'card stack' }, title(/^your turn/i.test(F.title) ? F.title : 'Your turn · ' + F.title, 'The same idea with fewer hints. Answer each step.'), U.h('div', { class: 'callout' }, F.setup), list)); stage.appendChild(area);
     function next() {
       U.clear(area); if (i >= F.steps.length) { area.appendChild(nextBtn('Start practice', function () { go(5); })); return; }
       var s = F.steps[i]; i++;

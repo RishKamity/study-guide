@@ -3,7 +3,7 @@
    Checks the course config, every generator (determinism, 4 distinct options, key == independent check, no NaN,
    numeric options ascending, JE balance, rule + work present), every bank item, pool sizes (no tiny concept pools),
    stations, the sample-exam leak rule, mock blueprints, the schedule, flashcards and audio scripts. Exit 1 on any FAIL. */
-import fs from 'fs'; import path from 'path'; import vm from 'vm'; import { pack } from './files.mjs';
+import fs from 'fs'; import path from 'path'; import vm from 'vm'; import { pack, md } from './files.mjs';
 const dir = process.argv[2]; if (!dir) { console.error('usage: node tools/validate.mjs <courseDir> [--seeds N]'); process.exit(1); }
 const SEEDS = +(process.argv[process.argv.indexOf('--seeds') + 1] || 0) || 300;
 const K = pack(dir);
@@ -14,7 +14,7 @@ const FAIL = (m) => { fails++; out.push('FAIL ' + m); }, WARN = (m) => { warns++
 try { for (const f of K.engineFiles) vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: f }); }
 catch (e) { console.log('FAIL the pack does not load: ' + e.message + '\n' + (e.stack || '').split('\n').slice(0, 3).join('\n')); process.exit(1); }
 const A = vm.runInContext('A', ctx), C = A.COURSE;
-if (K.P.flashcards && fs.existsSync(path.join(K.dir, K.P.flashcards))) A.FLASHCARDS = JSON.parse(fs.readFileSync(path.join(K.dir, K.P.flashcards), 'utf8'));
+if (K.P.flashcards && fs.existsSync(path.join(K.dir, K.P.flashcards))) { A.FLASHCARDS = JSON.parse(fs.readFileSync(path.join(K.dir, K.P.flashcards), 'utf8')); if (A.texifyCards) A.texifyCards(); }
 
 /* ---- course config ---- */
 ['id', 'title', 'course', 'exam', 'examAt', 'units', 'tier'].forEach(k => { if (C[k] === undefined || C[k] === null || C[k] === '') FAIL('course.js: missing ' + k); });
@@ -136,6 +136,41 @@ catch (e) { FAIL('schedule: ' + e.message); }
 (A.FLASHCARDS || []).forEach((c, i) => { if (!c.id || !c.front || !c.back) FAIL(`flashcard #${i}: needs id, front, back`); });
 if (A.FEAT.audio && (A.AUDIO || []).length) { A.AUDIO.forEach(t => { if (!t.id || !t.title || !Array.isArray(t.raw) || !t.spoken) FAIL(`audio ${t.id}: needs id, title, raw[], spoken`); }); OK(`audio: ${A.AUDIO.length} tracks`); }
 else if (A.FEAT.audio) WARN('tier has audio but there are no tracks yet (run tools/audio)');
+
+/* ---- math typesetting (pack.json "math": "katex"): every $…$ must parse, and math should not be left as plain Unicode ---- */
+if (K.P.math === 'katex') {
+  const { createRequire } = await import('module'); const req = createRequire(import.meta.url);
+  const katex = req(path.join(path.dirname(new URL(import.meta.url).pathname), '../vendor/katex/katex.min.js'));
+  const all = [];
+  const walk = (where, v) => { if (typeof v === 'string') all.push([where, v]); else if (Array.isArray(v)) v.forEach((x, i) => walk(where, x)); else if (v && typeof v === 'object') Object.keys(v).forEach(k => { if (k !== 'check') walk(where, v[k]); }); };
+  for (const topic of Object.keys(A.gens)) for (const skill of Object.keys(A.gens[topic])) for (let sd = 1; sd <= 40; sd++) { try { const it = A.makeItem(A.genId(topic, skill, sd * 15485863 + 3)); walk(`generator ${topic}.${skill}`, { stem: it.stem, options: it.options, rule: it.rule, work: it.work, why: it.why, table: it.table }); } catch (e) {} }
+  for (const t of Object.keys(A.banks)) A.banks[t].forEach((b, i) => walk(`bank ${t}#${i}`, b));
+  /* step labels are converted on screen (U.tex), not in the pack */
+  const texLabels = o => JSON.parse(JSON.stringify(o), (k, x) => k === 'label' && typeof x === 'string' && C.math === 'auto' && A.texify ? A.texify(x) : x);
+  for (const [id, st] of Object.entries(A.STATIONS)) walk('station ' + id, texLabels(st));
+  (A.SAMPLE || []).forEach((q, i) => walk('sample Q' + (i + 1), q));
+  (A.FLASHCARDS || []).forEach(c => walk('flashcard ' + c.id, { f: c.front, b: c.back }));
+  walk('sheet', A.SHEET || {}); walk('twins', A.TWINS || []); walk('tf', A.TF || []); 
+  if (K.P.reference && fs.existsSync(path.join(K.dir, K.P.reference))) {
+    /* the sheet is authored HTML (Markdown); with math: 'auto' each text node is converted on screen, so check that output */
+    const auto = C.math === 'auto' && A.texify, dec = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    md(fs.readFileSync(path.join(K.dir, K.P.reference), 'utf8')).split(/<[^>]+>/).map(dec).filter(s => s.trim()).forEach(s => walk('reference.md', auto ? A.texify(s) : s));
+  }
+  let bad = 0, plain = 0, segs = 0; const plainEx = [];
+  const PLAIN = /[²³⁴⁵⁶⁷⁸⁹⁰¹ˣⁿ⁻√′″∞≤≥≠⇒⇔→·π]|\b(?:lim|sin|cos|tan|ln|arcsin|arctan|arccos)\(|\b[a-z]\^\(/;
+  for (const [where, str] of all) {
+    const t = str.replace(/\\\$/g, '');
+    const n = (t.match(/\$/g) || []).length;
+    if (n % 2) { bad++; if (bad <= 12) FAIL(`math: unbalanced $ in ${where}: "${str.slice(0, 90)}"`); continue; }
+    const parts = t.split('$');
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2) { segs++; try { katex.renderToString(parts[i], { throwOnError: true, strict: 'ignore' }); } catch (e) { bad++; if (bad <= 12) FAIL(`math: KaTeX cannot parse in ${where}: $${parts[i].slice(0, 70)}$ (${String(e.message).split('\n')[0].slice(0, 80)})`); } }
+      else if (PLAIN.test(parts[i])) { plain++; if (plainEx.length < (process.env.ALLPLAIN ? 999 : 15)) plainEx.push(`${where}: "${parts[i].trim().slice(0, 70)}"`); }
+    }
+  }
+  if (plain) WARN(`math: ${plain} text pieces still look like plain-text math (convert to $…$), e.g.\n      ` + plainEx.join('\n      '));
+  if (!bad) OK(`math: ${segs} LaTeX segments parse with KaTeX`);
+}
 
 [...new Set(out)].forEach(l => console.log(l));
 console.log(`\n${fails ? 'FAIL' : 'PASS'}: ${fails} failure(s), ${warns} warning(s) for ${C.title}`);

@@ -11,6 +11,7 @@ U.views.exam = { tab: function (p) { return p && (p.kind === 'mock' || p.kind ==
   if (!rec.startedAt) { rec.startedAt = Date.now(); save(); }
   rec.t = rec.t || {}; rec.strike = rec.strike || {};
   var items = rec.ids.map(function (x) { return A.makeItem(x); });
+  cur = Math.max(0, Math.min(items.length - 1, rec.cur || 0));   /* resume on the question you left */
   var qwrap = U.h('div'), navwrap = U.h('div'), calc = isMock ? makeCalc() : null;
   main.appendChild(U.h('div', { class: 'stack' }, U.h('div', { class: 'row', style: { justifyContent: 'space-between', alignItems: 'flex-start' } }, U.h('div', null, U.h('div', { class: 'eyebrow' }, 'Exam mode · no feedback until you submit' + (rec.retake ? ' · retake' : '')), U.h('h1', { class: 'h2' }, rec.title || p.title), paceEl), U.h('div', { class: 'stack', style: { alignItems: 'flex-end', gap: '6px' } }, timerEl, calc ? calc.btn : null)), calc ? calc.panel : null, qwrap, navwrap));
   function save() { A.store.quiet(function (s) { rec.updatedAt = Date.now(); s.mocks[id] = rec; }); }
@@ -27,7 +28,7 @@ U.views.exam = { tab: function (p) { return p && (p.kind === 'mock' || p.kind ==
   tick = setInterval(paintTimer, 1000); paintTimer();
   function setAns(i) { rec.ans[cur] = (rec.ans[cur] === i ? undefined : i); if (rec.ans[cur] === undefined) delete rec.ans[cur]; save(); show(); }
   function toggleStrike(i) { rec.strike[cur] = rec.strike[cur] || {}; rec.strike[cur][i] = !rec.strike[cur][i]; save(); show(); }
-  function goto(i) { flushTime(); cur = Math.max(0, Math.min(items.length - 1, i)); show(); }
+  function goto(i) { flushTime(); cur = Math.max(0, Math.min(items.length - 1, i)); rec.cur = cur; save(); show(); }
   function show() {
     U.clear(qwrap); U.clear(navwrap); var it = items[cur];
     var opts = U.h('div', { class: 'opts' }), struck = rec.strike[cur] || {};

@@ -287,3 +287,13 @@ html{scroll-padding-bottom:calc(var(--tabs-h,96px) + var(--player-h,0px) + 16px)
 .stepnav button.cur{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .skiprow{display:flex;justify-content:flex-end;margin-top:8px}
 .pill.gen{background:color-mix(in srgb,var(--warn) 14%,transparent);border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:var(--text)}
+
+/* math (KaTeX, only when the pack enables it): readable size, long formulas scroll inside their own box instead of the page */
+.mx .katex { font-size: 1.08em; }
+.mx { text-transform: none; letter-spacing: 0; }
+.mx .katex .base { max-width: 100%; }
+.mx .katex-html { white-space: normal; }
+.optmain .mx, .stem .mx, .reveal .mx, .wstep .mx, .lesson .mx, .callout .mx { display: inline; }
+.mx .katex-html > .base { overflow-x: auto; overflow-y: hidden; vertical-align: middle; padding: 2px 0; }
+.mono .mx .katex, .math .mx .katex { font-size: 1.05em; }
+td .mx .katex, th .mx .katex { font-size: 1em; }

@@ -25,10 +25,13 @@ Course packs built from real class files contain the instructor's material. Keep
   "files": ["gens/gens.js", "content/stations.js", "content/banks.js", "content/sample.js", "content/extras.js"],
   "flashcards": "content/flashcards.json",
   "reference": "reference.md",
-  "audio": "audio/tracks.js"
+  "audio": "audio/tracks.js",
+  "math": "katex"
 }
 ```
 `files` load in order after `course.js`. Generators must load before anything that calls `A.makeItem` at load time.
+
+`"math": "katex"` inlines KaTeX (from `vendor/katex/`, fonts included, about 400 KB) so `$…$` in any text renders as typeset math. Use it for math-heavy courses; leave it out otherwise.
 
 ## course.js
 
@@ -48,6 +51,7 @@ A.COURSE = {
   bootcamp: { label: 'Boot camp', refresher: 'Optional refresher · only if ... feels shaky' },   // optional, for ch: 0 topics
   tier: 'quick' | 'standard' | 'full',
   accent: 'lavender' | 'teal' | 'sky' | 'green' | 'amber' | 'coral' | 'orange' | 'slate',
+  math: 'auto',                      // optional, needs pack.json "math": "katex": converts plain Unicode math (x², √(x + 1), f′, lim h→0, a/b) to LaTeX on screen
   features: { daily: true },         // optional overrides of the tier's feature switches (see engine/course.js)
   weights: { '9A': 2.5, ... },       // optional fractional "expected questions" per topic for the predicted score; default = topic.exam
   skillWeights: { '6C.wa': 0.5 },    // optional: practice emphasis inside a topic (rarely-tested skill < 1 < favorite skill)
@@ -66,6 +70,8 @@ A.TOPICS = [
 ```
 
 **Schedule.** `windows` are daily study hours (local time). `hoursPerDay` caps each day (use it for "I have about 10 hours": hours / days left). `start` (ISO) delays the plan until the student begins. `stopBeforeExam` minutes before the exam nothing is planned. The plan re-builds from "now" on every visit and trims low-weight topics when time runs short; it never drops the dress rehearsal.
+
+**Math typesetting.** With `"math": "katex"` in `pack.json`, write formulas either as LaTeX between single dollar signs (`$\frac{1}{2\sqrt{x}}$`; `\$` for a literal dollar) or, with `math: 'auto'`, as plain Unicode (`1/(2√x)`, `e⁻²ˣ`, `lim h→0 (f(x + h) − f(x))/h`) and let `engine/texify.js` convert it for display. The conversion is display-only: answer keys, `check()` and option matching see the original text. Text that already contains `$` is left alone, so you can hand-write any formula the converter gets wrong. Keep prose and math apart so the converter can tell them apart: write "times" rather than "·" between words, put parentheses around a negative term you subtract (`f(x) − (−x)`), and write ranges and ids (`1–3`, `Q2`, `4A`) as usual (they stay text). `validate` renders every `$…$` with KaTeX (FAIL on a parse error) and warns about text that still looks like plain math; `ALLPLAIN=1` lists every case. Look at the phone screenshots: a long formula in a table cell can push the table sideways.
 
 **Reference tab.** `ref: { title: 'Formula and journal entry sheet', blurb: 'Built from ...', hint: 'NSF, petty, FIFO' }` (all optional).
 

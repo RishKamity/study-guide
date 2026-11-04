@@ -76,6 +76,8 @@ node tools/build.mjs courses/<id>          # -> courses/<id>/dist/index.html
 node tools/validate.mjs courses/<id>       # must PASS (fix every FAIL; read every warn)
 node tools/smoke.cjs courses/<id>          # must PASS; then LOOK at courses/<id>/shots/*.png
 ```
+For math courses, add `"math": "katex"` to `pack.json` and `math: 'auto'` to `course.js` so formulas are typeset (see "Math typesetting" in `docs/CONTENT_FORMAT.md`); validate then checks that every formula parses.
+
 Smoke walks every lesson on a phone-size screen. Treat its warnings (tables that scroll inside a card, titles that wrap to 3 lines) as fixes to make, then look at the screenshots, including the `station-<id>-worked.png` shots of every worked example, and re-run.
 
 ## Phase 7: Independent review (Full tier; recommended for Standard)
@@ -97,7 +99,7 @@ Fix all HIGH and MED findings and re-run validate + smoke. (In the ACCT 200 buil
   - Full: `capabilities: {db: {}, user: {}, sample: {}, downloads: true}` (sync, AI tutor, export). Load the `artifact-capabilities` skill if you change runtime code.
   - Full with audio: pass `files` mapping `audio/<id>.mp3` -> `courses/<id>/audio/mp3/<id>.mp3` (one publish holds up to 64 MB).
 - Elsewhere, deliver `dist/index.html` (and the `audio/` folder) as files.
-- Republish to the **same URL** for every later fix. Never change `A.COURSE.id` or `storageKey` after the first publish (that would orphan the student's progress). Updates are safe while the student studies: progress lives in their browser and synced storage, not in the page.
+- Republish to the **same URL** for every later fix. Never change `A.COURSE.id` or `storageKey` after the first publish (that would orphan the student's progress). Updates are safe while the student studies: progress lives in their browser and synced storage, not in the page, and the current question, lesson card and mock position are kept per device, so after an update the student reloads once and picks up where they were.
 
 ## Phase 10: Daily puzzle (if chosen)
 

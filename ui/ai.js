@@ -31,7 +31,7 @@
 
   /* ---------- shared course context ---------- */
   var TC = A.COURSE.tutor || {};
-  var RULES = (TC.context || ('You are a tutor helping a student prepare for ' + [A.COURSE.course, A.COURSE.exam].filter(Boolean).join(' ') + '.')) + '\n' + (TC.conventions ? 'Course conventions: ' + TC.conventions + '\n' : '') + 'Be brief, plain and concrete. No long paragraphs. Write journal entries or worked steps as plain lines. If unsure, say so.';
+  var RULES = (TC.context || ('You are a tutor helping a student prepare for ' + [A.COURSE.course, A.COURSE.exam].filter(Boolean).join(' ') + '.')) + '\n' + (TC.conventions ? 'Course conventions: ' + TC.conventions + '\n' : '') + (A.MATH ? 'Write every formula in LaTeX between single dollar signs, e.g. $\\frac{d}{dx}x^2 = 2x$. Never use $$ or a dollar sign for anything else.\n' : '') + 'Be brief, plain and concrete. No long paragraphs. Write journal entries or worked steps as plain lines. If unsure, say so.';
   function topicCtx(tid) {
     var t = A.TOPIC[tid], S0 = A.STATIONS[tid], out = '';
     if (t) out += 'Topic: ' + t.id + ' ' + t.title + '\n';
@@ -49,7 +49,7 @@
     var wh = (item.why || []).map(function (w, i) { return w ? L[i] + ': ' + w : null; }).filter(Boolean); if (wh.length) s += 'Why the wrong options tempt: ' + wh.join(' ') + '\n';
     return s;
   }
-  function bubbleText(el, text) { el.textContent = text; }
+  function bubbleText(el, text) { el.textContent = text; if (U.mathify) U.mathify(el); }
   function aiLabel() { return h('span', { class: 'ailab' }, 'AI'); }
 
   /* ---------- 1. why explainer ---------- */
@@ -60,7 +60,7 @@
     function run(msgs, tier, cache, onDone) {
       if (busy) return; busy = true; ctl = new AbortController(); stop.hidden = false; outTxt.textContent = 'Thinking…'; out.hidden = false;
       var opts = { signal: ctl.signal, modelTier: tier, cache: cache, onText: function (u) { if (!box.isConnected) { ctl.abort(); return; } outTxt.textContent = u.text; } };
-      S(msgs, opts).then(function (r) { outTxt.textContent = r.text + (r.truncated ? ' …' : ''); onDone(r.text); }, function (e) { var m = errMsg(e); if (m) outTxt.textContent = (e.text ? e.text + '\n\n' : '') + m; else if (!e.text) out.hidden = true; }).then(function () { busy = false; stop.hidden = true; });
+      S(msgs, opts).then(function (r) { outTxt.textContent = r.text + (r.truncated ? ' …' : ''); if (U.mathify) U.mathify(outTxt); onDone(r.text); }, function (e) { var m = errMsg(e); if (m) outTxt.textContent = (e.text ? e.text + '\n\n' : '') + m; else if (!e.text) out.hidden = true; }).then(function () { busy = false; stop.hidden = true; });
     }
     var btn = U.aiBtn('Why? (AI)', function () {
       var base = RULES + '\n\n' + topicCtx(item.topic) + '\n' + itemText(item, chosen) + '\nIn at most 3 short sentences: (1) the specific mistake the student’s choice reflects (or, if they were right, the trap to watch), (2) the rule, (3) the right reasoning using this question’s numbers.';
@@ -103,7 +103,7 @@
       var live = h('div', { class: 'tmsg assistant' }, aiLabel(), h('div', { class: 'tt' }, 'Thinking…')); log.appendChild(live); stop.hidden = false; ctl = new AbortController();
       var lead = RULES + '\n\n' + topicCtx(topic) + '\nReply rules: at most 120 words unless a worked example is requested; end with one short check question for the student.';
       var turns = [{ role: 'user', content: lead }].concat(hh.slice(0, -1).slice(-9).map(function (m) { return { role: m.role, content: m.content }; })); turns.push({ role: 'user', content: text });
-      S(turns, { cache: false, signal: ctl.signal, modelTier: 'default', onText: function (u) { if (!root.isConnected) { ctl.abort(); return; } live.querySelector('.tt').textContent = u.text; } }).then(function (r) { hh.push({ role: 'assistant', content: r.text }); if (hh.length > 10) HIST[topic] = hh.slice(-10); }, function (e) { var m = errMsg(e); if (m) hh.push({ role: 'assistant', content: (e.text ? e.text + '\n\n' : '') + m }); else if (e.text) hh.push({ role: 'assistant', content: e.text }); }).then(function () { busy = false; stop.hidden = true; if (root.isConnected) paint(); });
+      S(turns, { cache: false, signal: ctl.signal, modelTier: 'default', onText: function (u) { if (!root.isConnected) { ctl.abort(); return; } live.querySelector('.tt').textContent = u.text; } }).then(function (r) { if (U.mathify) U.mathify(live.querySelector('.tt')); hh.push({ role: 'assistant', content: r.text }); if (hh.length > 10) HIST[topic] = hh.slice(-10); }, function (e) { var m = errMsg(e); if (m) hh.push({ role: 'assistant', content: (e.text ? e.text + '\n\n' : '') + m }); else if (e.text) hh.push({ role: 'assistant', content: e.text }); }).then(function () { busy = false; stop.hidden = true; if (root.isConnected) paint(); });
     }
     sel.addEventListener('change', function () { topic = sel.value; paint(); });
     var chips = h('div', { class: 'row' }); [['Explain like I’m new', 'Explain this topic like I am new to it.'], ['Give me an analogy', 'Give me an analogy for the main idea of this topic.'], ['Similar example', 'Walk me through a similar worked example with different numbers.'], ['Quiz me', 'Quiz me with one question on this topic. Wait for my answer.'], ['What’s the trap?', 'What is the most common trap on this topic and how do I avoid it?']].forEach(function (c) { chips.appendChild(h('button', { class: 'btn ghost sm', type: 'button', onclick: function () { send(c[1], c[0]); } }, c[0])); });

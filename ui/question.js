@@ -1,6 +1,8 @@
 /* question.js — one practice question with strike-outs, confidence, instant explanatory feedback. */
 U.question = function (item, o) {
-  o = o || {}; var shownAt = Date.now(), sel = null, locked = false, struck = {}, res = null;
+  o = o || {}; var shownAt = Date.now(), sel = null, locked = false, struck = {}, res = null, R = o.restore || null;
+  if (R && R.struck) struck = R.struck;
+  function report(extra) { if (o.onState) o.onState(Object.assign({ sel: sel, struck: struck, answered: locked }, extra || {})); }
   var root = U.h('div', { class: 'q' }), optsEl = U.h('div', { class: 'opts' }), confEl = U.h('div', { class: 'conf hide' }), after = U.h('div');
   var t = A.TOPIC[item.topic];
   var meta = U.h('div', { class: 'qhead' }, U.h('div', { class: 'row', style: { gap: '8px' } }, o.label ? U.h('span', { class: 'eyebrow' }, o.label) : null, U.h('span', { class: 'pill' }, t ? (t.id + ' · ' + t.title) : item.topic), item.calc ? U.h('span', { class: 'pill' }, 'Calculator') : null), o.right || null);
@@ -22,6 +24,7 @@ U.question = function (item, o) {
   }
   root.appendChild(after);
   function paint() {
+    if (!locked) report();
     optEls.forEach(function (el, i) {
       el.className = 'opt' + (struck[i] ? ' struck' : '') + (sel === i && !locked ? ' sel' : '') + (locked ? ' locked' : '') + (locked && i === item.answer ? ' ok' : '') + (locked && i === sel && i !== item.answer ? ' bad' : '');
     });
@@ -34,6 +37,11 @@ U.question = function (item, o) {
     if (locked || sel === null) return; locked = true;
     res = A.recordAnswer({ item: item, chosen: sel, conf: conf, ms: Date.now() - shownAt, mode: o.mode || 'learn', pretest: !!o.pretest, fresh: o.fresh });
     confEl.classList.add('hide'); paint(); U.sfx(res.correct ? 'ok' : 'bad'); if (res.milestone) { setTimeout(function () { U.sfx('win'); U.toast(res.milestone + ' in a row!'); }, 350); }
+    report({ conf: conf, correct: res.correct });
+    reveal(conf, false);
+  }
+  /* the feedback block; restoring=true re-shows an answer already recorded (no second recordAnswer, no onAnswer) */
+  function reveal(conf, restoring) {
     var banner;
     if (o.pretest) banner = U.h('div', { class: 'callout' }, 'Pretest: not graded. Seeing the answer first makes the lesson stick.');
     else if (res.correct && conf === 2) banner = U.h('div', { class: 'callout warn' }, 'Right, but you guessed. It will come back once so it is earned.');
@@ -42,8 +50,8 @@ U.question = function (item, o) {
     else banner = U.h('div', { class: 'callout bad' }, 'Not yet. Read the rule and the work, then it returns in a few questions.');
     after.appendChild(U.h('div', { class: 'stack' }, banner, U.revealBlock(item, sel), (!o.pretest && U.aiWhy && A.FEAT.ai) ? U.aiWhy(item, sel) : null,
       o.onNext ? U.h('button', { class: 'btn block', type: 'button', onclick: function () { o.onNext(); } }, o.nextLabel || 'Next') : null));
-    if (o.onAnswer) o.onAnswer({ correct: res.correct, chosen: sel, conf: conf, res: res });
-    var nb = after.querySelector('.btn'); if (nb && o.focusNext !== false) setTimeout(function () { try { nb.focus({ preventScroll: true }); } catch (e) {} }, 0);
+    if (o.onAnswer && !restoring) o.onAnswer({ correct: res.correct, chosen: sel, conf: conf, res: res });
+    var nb = after.querySelector('.btn'); if (nb && o.focusNext !== false && !restoring) setTimeout(function () { try { nb.focus({ preventScroll: true }); } catch (e) {} }, 0);
   }
   root.keys = function (e) {
     var k = e.key.toLowerCase();
@@ -55,5 +63,11 @@ U.question = function (item, o) {
     } else if ((k === 'enter' || k === ' ') && o.onNext) { e.preventDefault(); o.onNext(); return true; }
     return false;
   };
-  paint(); return root;
+  if (R && R.answered && R.sel !== null && R.sel !== undefined) {
+    sel = R.sel; locked = true; res = { correct: !!R.correct }; paint(); reveal(R.conf === undefined ? null : R.conf, true);
+  } else {
+    if (R && R.sel !== null && R.sel !== undefined && !struck[R.sel]) { sel = R.sel; if (!o.pretest) confEl.classList.remove('hide'); }
+    paint();
+  }
+  return root;
 };

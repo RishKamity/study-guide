@@ -147,7 +147,7 @@
 
   U.views.ref = { tab: 'ref', hash: 'ref', render: function (main) {
     var RF = A.COURSE.ref || {};
-    var box = h('div', { class: 'ref', html: A.REF_HTML || '<p>Not available.</p>' }), q = h('input', { type: 'search', placeholder: 'Filter the sheet' + (RF.hint ? ' (e.g. ' + RF.hint + ')' : ''), 'aria-label': 'Filter the sheet' });
+    var box = U.mathify(h('div', { class: 'ref', html: A.REF_HTML || '<p>Not available.</p>' }), true), q = h('input', { type: 'search', placeholder: 'Filter the sheet' + (RF.hint ? ' (e.g. ' + RF.hint + ')' : ''), 'aria-label': 'Filter the sheet' });
     q.addEventListener('input', function () {
       var v = q.value.trim().toLowerCase();
       Array.prototype.forEach.call(box.querySelectorAll('tbody tr'), function (r) { r.classList.toggle('hide', !!v && r.textContent.toLowerCase().indexOf(v) < 0); });

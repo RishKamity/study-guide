@@ -1,0 +1,1 @@
+KaTeX 0.16.22 (MIT), from npm: dist/katex.min.js, dist/katex.min.css, dist/fonts/*.woff2. Used by tools/build.mjs when pack.json has "math": "katex".

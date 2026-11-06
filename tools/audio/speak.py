@@ -29,7 +29,24 @@ def money(m):
         if len(d)==2 and d!='00': c=int(d); out+=' and '+W(c)+(' cent' if c==1 else ' cents')
         elif len(d)==1: out+=' and '+W(int(d)*10)+' cents'
     return out
+SUPD={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'}
+SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'}
+RAW={}; WORDS={}
+def scripts(t):
+    # pack-defined raw replacements (symbols) and mixed-case words first
+    for k,v in RAW.items(): t=t.replace(k,v)
+    for k,v in WORDS.items(): t=re.sub(r'(?<![A-Za-z])'+re.escape(k)+r'(?![A-Za-z])',v,t)
+    # powers of ten: 10⁻⁴ -> ten to the minus 4
+    t=re.sub(r'10([⁻⁺]?)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)',lambda m:'ten to the '+('minus ' if m.group(1)=='⁻' else '')+''.join(SUPD[c] for c in m.group(2)),t)
+    # charges: ²⁺ / ⁻ / ³⁻ -> "two plus", "minus"
+    t=re.sub(r'([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])',lambda m:' '+((''.join(SUPD[c] for c in m.group(1))+' ') if m.group(1) else '')+('plus' if m.group(2)=='⁺' else 'minus')+' ',t)
+    # remaining superscript digits are exponents
+    t=re.sub(r'[⁰¹²³⁴⁵⁶⁷⁸⁹]+',lambda m:{'2':' squared','3':' cubed'}.get(''.join(SUPD[c] for c in m.group(0)),' to the '+''.join(SUPD[c] for c in m.group(0))),t)
+    # subscripts: spoken as digits
+    t=re.sub(r'[₀₁₂₃₄₅₆₇₈₉]+',lambda m:' '+''.join(SUBD[c] for c in m.group(0))+' ',t)
+    return t
 def speak(t):
+    t=scripts(t)
     t=t.replace('’',"'").replace('‘',"'").replace('“','"').replace('”','"').replace(' ',' ')
     t=re.sub(r'\bDr\.\s','Doctor ',t)
     t=t.replace('e.g.','for example').replace('i.e.','that is').replace('vs.','versus').replace('etc.','and so on').replace('approx.','about')
@@ -66,7 +83,11 @@ if __name__=='__main__':
     import json,sys,os
     d=os.path.join(sys.argv[1] if len(sys.argv)>1 else '.','audio')
     lex=os.path.join(d,'lexicon.json')
-    if os.path.exists(lex): ACR.update(json.load(open(lex)))
+    if os.path.exists(lex):
+        for k,v in json.load(open(lex)).items():
+            if re.fullmatch(r'[A-Z][A-Z0-9]*',k): ACR[k]=v
+            elif re.fullmatch(r'[A-Za-z][A-Za-z0-9]*',k): WORDS[k]=v
+            else: RAW[k]=v
     T=json.load(open(os.path.join(d,'scripts_raw.json')))
     for t in T:
         t['spoken']=[speak(p) for p in t['raw']]

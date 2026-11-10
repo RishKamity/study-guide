@@ -133,13 +133,14 @@ U.views.station = { tab: 'path', render: function (main, p) {
     else if (n === 4) { if (S.faded) faded(); else go(5); } else if (n === 5) practice(); else exit();
   }
   if (done) { run(2); stage.insertBefore(U.h('div', { class: 'callout good' }, 'You finished this station. Reviewing the lesson again is fine.'), stage.firstChild); setBar(7); }
-  else if (step === 0 && !st) { stage.appendChild(U.h('div', { class: 'card stack' }, U.h('p', null, S.intro), U.h('p', { class: 'muted small' }, 'About ' + T.mins + ' minutes. Warm-up, pretest, lesson, worked example, practice, exit ticket.'), nextBtn('Start station', function () { run(0); }))); setBar(0); }
+  else if (step === 0 && !st) { stage.appendChild(U.h('div', { class: 'card stack' }, U.h('p', null, S.intro), U.h('p', { class: 'muted small' }, 'About ' + T.mins + ' minutes. Warm-up, pretest, lesson, worked example, practice, exit ticket.'), nextBtn('Start station', function () { run(0); }), p.skim ? U.h('p', { class: 'muted small' }, 'Short on time? Your plan suggests practice only for this topic.') : null, p.skim ? U.h('button', { class: 'btn ghost block', onclick: function () { A.markSkim(id); U.go('session', { title: T.title + ' \u00B7 practice only', topics: [id], noFilter: true }); } }, 'Practice only (skip the lesson)') : null)); setBar(0); }
   else run(step);
   return function () { U.keyFn = null; };
 } };
 U.openSeq = function (it) {
   var slot = A.plan ? A.plan(Date.now(), A.store.state).slotOf(it) : null;
-  if (it.type === 'station' && slot && slot.skim && !A.stationStarted(it.id)) { A.markSkim(it.id); U.go('session', { title: A.TOPIC[it.id].title + ' \u00B7 practice only', topics: [it.id], noFilter: true }); return; }
+  /* a lesson the plan shortened still opens as a full lesson; the station offers the practice-only shortcut */
+  if (it.type === 'station' && slot && slot.skim && !A.stationStarted(it.id)) { U.go('station', { id: it.id, skim: true }); return; }
   if (it.type === 'drill') { U.go('session', { title: A.TOPIC[it.id].title, topics: [it.id], noFilter: true }); return; }
   if (it.type === 'station') U.go('station', { id: it.id });
   else if (it.type === 'foundation') U.go('exam', { id: 'foundation', title: 'Foundation check', minutes: 10, fixed: A.FOUNDATION, pass: 0.8, kind: 'foundation' });

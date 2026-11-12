@@ -130,6 +130,22 @@ A.defBank('1A', [
 - Each wrong answer encodes a real mistake, and its reason says why it is tempting and why it is wrong.
 - `general: true` marks content written from standard textbook knowledge because the course files barely cover it; the app shows "Not from your course files".
 
+### Rewording (`alts`)
+
+Concept questions repeat (generators don't exist for them), so give every bank question 2-3 other wordings of the same fact. The student then learns the idea instead of recognizing a sentence.
+
+```js
+B('What does the law of demand say?', 'When the price rises, quantity demanded falls, other things equal.', [3 wrong], [3 reasons], 'rule', { alts: [
+  'A store raises its sandwich price and sells fewer, nothing else changing. Which idea does this show?',   // string: new stem, same answer + wrong options
+  { q: 'Which statement is the law of demand?', a: 'Other things equal, a higher price means a lower quantity demanded.',
+    w: [3 wrong], why: [3 reasons] },                                                                       // object: overrides any of q, a, w, why, rule, table, work
+] }),
+```
+- Wording 0 is the question itself; wording k is `alts[k-1]` merged over it. Item ids stay `b:<topic>:<idx>:<variant>`, and the variant picks the wording (`variant % wordings`) and the option order, so adding alts later keeps every student's progress.
+- Each repeat of a question shows its least-seen wording. A **missed** question comes back (on the misses schedule) as the same idea in a **different wording from the one missed**; answering that right clears it.
+- Mix angles: plain stem, a short scenario, and the reverse (term -> definition, as an object alt with its own options). Synonym swaps don't count.
+- Validate checks every wording like a normal question (4 distinct options, key, rule, 3 reasons) and warns when more than 20% of a concept-only topic's questions have fewer than 2 alts.
+
 ## Stations (`A.STATIONS[id]`)
 
 ```js

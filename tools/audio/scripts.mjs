@@ -7,7 +7,7 @@ const dir = path.resolve(process.argv[2] || '.'); const K = pack(dir);
 const ctx = { console, Math, Date, JSON, Intl, setTimeout, clearTimeout, localStorage: { getItem: () => null, setItem() {} }, document: { addEventListener() {}, documentElement: { style: { setProperty() {} } } }, window: { addEventListener() {} } };
 vm.createContext(ctx); for (const f of K.engineFiles.filter(f => !/audio\/tracks\.js$/.test(f))) vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: f });
 const A = vm.runInContext('A', ctx), C = A.COURSE, S = A.STATIONS;
-const end = t => { t = String(t || '').trim(); return !t ? '' : /[.!?:]$/.test(t) ? t : t + '.'; };
+const end = t => { t = String(t || '').replace(/```[\s\S]*?```/g, ' ').replace(/\s+/g, ' ').trim(); return !t ? '' : /[.!?:]$/.test(t) ? t : t + '.'; };
 const wc = t => String(t).split(/\s+/).filter(Boolean).length;
 function stationScript(id) {
   const T = A.TOPIC[id], s = S[id], out = [end(T.title)]; if (s.intro) out.push(end(s.intro));

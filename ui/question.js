@@ -6,7 +6,7 @@ U.question = function (item, o) {
   var meta = U.h('div', { class: 'qhead' }, U.h('div', { class: 'row', style: { gap: '8px' } }, o.label ? U.h('span', { class: 'eyebrow' }, o.label) : null, U.h('span', { class: 'pill' }, t ? (t.id + ' · ' + t.title) : item.topic), item.calc ? U.h('span', { class: 'pill' }, 'Calculator') : null), o.right || null);
   if (item.general) meta.appendChild(U.h('span', { class: 'pill gen', title: 'Written from standard textbook knowledge; check it against your notes.' }, 'Not from your course files'));
   root.appendChild(meta);
-  root.appendChild(U.h('div', { class: 'stem' }, item.stem));
+  root.appendChild(U.rich(item.stem, 'stem'));
   if (item.table) root.appendChild(U.dataTable(item.table));
   var optEls = [];
   item.options.forEach(function (_, i) {

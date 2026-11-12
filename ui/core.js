@@ -17,6 +17,16 @@ U.add = function (el, c) {
 U.clear = function (el) { while (el.firstChild) el.removeChild(el.firstChild); return el; };
 U.$ = function (s, r) { return (r || document).querySelector(s); };
 U.fmtTime = function (sec) { sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; };
+/* rich text: ```fenced``` parts render as monospace code blocks (any course can put code in stems, setups, cards) */
+U.rich = function (text, cls) {
+  var s = String(text === null || text === undefined ? '' : text), box = U.h('div', { class: cls || null });
+  if (s.indexOf('```') < 0) { box.appendChild(document.createTextNode(s)); return box; }
+  s.split('```').forEach(function (p, i) {
+    if (i % 2) { p = p.replace(/^[a-z]*\n/, '').replace(/\n+$/, ''); box.appendChild(U.h('pre', { class: 'code' }, p)); }
+    else { p = p.replace(/^\s+|\s+$/g, ''); if (p) box.appendChild(U.h('div', null, p)); }
+  });
+  return box;
+};
 U.plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
 
 /* ---- sound ---- */

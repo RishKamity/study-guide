@@ -31,6 +31,7 @@ U.visual = function (v) {
     })));
     w.appendChild(U.h('div', { class: 'small dim', style: { marginTop: '6px' } }, [U.h('span', { class: 'lgd ls' }), ' in COGS   ', U.h('span', { class: 'lgd lk' }), ' in ending inventory', v.note ? '. ' + v.note : '']));
   }
+  else if (t === 'code') { w.appendChild(U.h('pre', { class: 'code' }, v.src)); if (v.note) w.appendChild(U.h('div', { class: 'small dim', style: { marginTop: '6px' } }, v.note)); }
   else if (t === 'flow') { w.appendChild(U.h('div', { class: 'flow' }, v.steps.map(function (s) { return U.h('div', null, s); }))); if (v.note) w.appendChild(U.h('div', { class: 'small dim', style: { marginTop: '6px' } }, v.note)); }
   else if (t === 'icons') w.appendChild(U.h('div', { class: 'icons3' }, v.items.map(function (i) { return U.h('div', null, U.h('div', { html: ICONS[i.k] || '' }), U.h('b', null, i.t), U.h('span', null, i.d)); })));
   else if (t === 'tri') {
@@ -54,7 +55,7 @@ U.visual = function (v) {
 /* the reveal block for a question/result: rule, work, JE, per-option why */
 U.optBody = function (item, i) {
   if (item.optsRaw && item.optsRaw[i] && Array.isArray(item.optsRaw[i])) return U.jeTable(item.optsRaw[i], { sm: true });
-  return U.h('span', null, item.options[i]);
+  var o = String(item.options[i]); return U.h('span', { class: o.indexOf('\n') >= 0 ? 'optpre' : null }, o);
 };
 U.letters = ['A', 'B', 'C', 'D'];
 U.revealBlock = function (item, chosen) {

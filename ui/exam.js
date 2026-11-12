@@ -41,7 +41,7 @@ U.views.exam = { tab: function (p) { return p && (p.kind === 'mock' || p.kind ==
       el.appendChild(U.h('button', { class: 'xbtn', type: 'button', 'aria-label': 'Cross out', onclick: function () { toggleStrike(i); } }, '✕'));
       opts.appendChild(el);
     });
-    qwrap.appendChild(U.h('div', { class: 'paper stack' }, U.h('div', { class: 'row', style: { justifyContent: 'space-between' } }, U.h('b', { class: 'mono' }, (cur + 1) + ' / ' + items.length), U.h('button', { class: 'btn ghost sm', onclick: function () { if (rec.flag[cur]) delete rec.flag[cur]; else rec.flag[cur] = 1; save(); show(); } }, rec.flag[cur] ? '⚑ Flagged' : '⚐ Flag')), U.h('div', { class: 'stem' }, it.stem), it.table ? U.dataTable(it.table) : null, opts,
+    qwrap.appendChild(U.h('div', { class: 'paper stack' }, U.h('div', { class: 'row', style: { justifyContent: 'space-between' } }, U.h('b', { class: 'mono' }, (cur + 1) + ' / ' + items.length), U.h('button', { class: 'btn ghost sm', onclick: function () { if (rec.flag[cur]) delete rec.flag[cur]; else rec.flag[cur] = 1; save(); show(); } }, rec.flag[cur] ? '⚑ Flagged' : '⚐ Flag')), U.rich(it.stem, 'stem'), it.table ? U.dataTable(it.table) : null, opts,
       U.h('div', { class: 'row' }, U.h('button', { class: 'btn ghost', disabled: cur === 0, onclick: function () { goto(cur - 1); } }, '← Prev'), U.h('button', { class: 'btn ghost', disabled: cur === items.length - 1, onclick: function () { goto(cur + 1); } }, 'Next →'))));
     var nav = U.h('div', { class: 'nav' }); items.forEach(function (_, i) { nav.appendChild(U.h('button', { class: (rec.ans[i] !== undefined ? 'ans ' : '') + (i === cur ? 'cur ' : '') + (rec.flag[i] ? 'flag' : ''), onclick: function () { goto(i); } }, i + 1)); });
     var un = items.length - Object.keys(rec.ans).length, nf = Object.keys(rec.flag).length;
@@ -151,7 +151,7 @@ function results(main, p, rec) {
   wrap.appendChild(U.h('h2', { class: 'h2', id: 'review' }, wrong.length ? 'Review what you missed (' + wrong.length + ')' : 'Perfect. Nothing to review.'));
   wrong.forEach(function (i) {
     var it = items[i], ch = rec.ans[i];
-    wrap.appendChild(U.h('div', { class: 'card stack' }, U.h('div', { class: 'eyebrow' }, 'Q' + (i + 1) + ' · ' + it.topic + ' ' + A.TOPIC[it.topic].title), U.h('div', { class: 'stem' }, it.stem), it.table ? U.dataTable(it.table) : null,
+    wrap.appendChild(U.h('div', { class: 'card stack' }, U.h('div', { class: 'eyebrow' }, 'Q' + (i + 1) + ' · ' + it.topic + ' ' + A.TOPIC[it.topic].title), U.rich(it.stem, 'stem'), it.table ? U.dataTable(it.table) : null,
       U.h('div', { class: 'opts' }, it.options.map(function (_, k) { return U.h('div', { class: 'opt' + (k === it.answer ? ' ok' : (k === ch ? ' no' : '')) }, U.h('span', { class: 'optmain' }, U.h('span', { class: 'lt' }, U.letters[k]), U.h('span', { class: 'tx' }, U.optBody(it, k)))); })),
       U.h('div', { class: 'small muted' }, ch === undefined ? 'You left this blank.' : 'You chose ' + U.letters[ch] + '. Correct: ' + U.letters[it.answer] + '.'), U.revealBlock(it, ch),
       U.h('button', { class: 'btn ghost sm', style: { alignSelf: 'flex-start' }, onclick: function () { U.go('session', { title: 'Drill ' + it.topic, topics: [it.topic] }); } }, 'Drill this topic')));

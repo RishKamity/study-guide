@@ -109,7 +109,7 @@
       }
       var sc = h('div', { class: 'counter' }); function paintScore() { U.clear(sc); sc.appendChild(h('span', null, 'Score ', h('b', null, right + '/' + n))); sc.appendChild(h('span', null, clock)); }
       paintScore();
-      area.appendChild(h('div', { class: 'card stack' }, sc, h('div', { class: 'eyebrow' }, it.topic + ' · ' + (A.skills[it.skill] ? A.skills[it.skill].label : '')), h('div', { class: 'stem' }, it.stem), it.table ? U.dataTable(it.table) : null, inp, h('button', { class: 'btn', onclick: check }, 'Check'), fb));
+      area.appendChild(h('div', { class: 'card stack' }, sc, h('div', { class: 'eyebrow' }, it.topic + ' · ' + (A.skills[it.skill] ? A.skills[it.skill].label : '')), U.rich(it.stem, 'stem'), it.table ? U.dataTable(it.table) : null, inp, h('button', { class: 'btn', onclick: check }, 'Check'), fb));
       inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); check(); } }); U.keyFn = null; setTimeout(function () { inp.focus(); }, 50);
     }
     paintChips(); next(); return function () { clearInterval(tick); U.keyFn = null; };
@@ -151,7 +151,7 @@
         fb.appendChild(h('button', { class: 'btn', onclick: next }, 'Next entry'));
       }
       addRow(); addRow();
-      area.appendChild(h('div', { class: 'card stack' }, h('div', { class: 'counter' }, h('span', null, 'Entries ', h('b', null, right + '/' + n))), h('div', { class: 'eyebrow' }, it.topic), h('div', { class: 'stem' }, it.stem), rowsEl,
+      area.appendChild(h('div', { class: 'card stack' }, h('div', { class: 'counter' }, h('span', null, 'Entries ', h('b', null, right + '/' + n))), h('div', { class: 'eyebrow' }, it.topic), U.rich(it.stem, 'stem'), rowsEl,
         h('div', { class: 'row' }, h('button', { class: 'btn ghost sm', onclick: addRow }, '+ Add a line'), h('button', { class: 'btn', onclick: check }, 'Check entry')), fb));
     }
     paintChips(); next();

@@ -141,7 +141,9 @@ A.STATIONS['1B'] = {
   faded: { title, setup, steps: [{ label, action, math, ask: { q, opts: [...], ans: 0, why } }] } | null
 };
 ```
-Visual types: `table {head, rows}`, `twocol {left:{title,items}, right:{...}}`, `flow {steps, note}`, `stack {tiers}`, `je {rows:[[acct, dr, cr]], note}`, `tacct {name, left, right, end}`, `recon {bank, book, adj}`, `layers {layers:[{n,u,sold}]}`, `icons {items:[{k,t,d}]}`, `tri {corners:[{t,d,hl}]}`.
+Visual types: `code {src, note}` (a monospace code block), `table {head, rows}`, `twocol {left:{title,items}, right:{...}}`, `flow {steps, note}`, `stack {tiers}`, `je {rows:[[acct, dr, cr]], note}`, `tacct {name, left, right, end}`, `recon {bank, book, adj}`, `layers {layers:[{n,u,sold}]}`, `icons {items:[{k,t,d}]}`, `tri {corners:[{t,d,hl}]}`.
+
+**Code in text.** Any stem (generator, bank or sample) and any worked/faded `setup` may contain fenced blocks (three backticks, newline, code, newline, three backticks); they render as monospace code and are skipped by the audio. Options that contain a line break render monospace too. Keep code lines under about 40 characters so they fit a phone.
 
 Quotes must be verbatim fragments from a transcript. If you only have a paraphrase, set `quote: null`.
 

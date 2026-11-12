@@ -128,7 +128,7 @@
     Object.keys(st.skills).forEach(function (k) { (st.skills[k].a || []).forEach(function (x) { if (!x[2] && String(x[0]).indexOf('s:') !== 0 && A.skills[k]) rows.push({ skill: k, id: x[0], at: x[1] }); }); });
     rows.sort(function (a, b) { return b.at - a.at; }); return rows.slice(0, 10);
   }
-  function conceptTopic(tid) { return A.skills[tid + '.bank'] && A.TOPIC[tid] && A.TOPIC[tid].ch >= 4; }
+  function conceptTopic(tid) { return A.skills[tid + '.bank'] && A.TOPIC[tid] && A.TOPIC[tid].ch !== 0; }  /* any unit except the boot camp (0) */
   function validItem(o) {
     if (!o || typeof o.stem !== 'string' || o.stem.length < 15 || o.stem.length > 600) return false;
     if (!Array.isArray(o.options) || o.options.length !== 4 || o.options.some(function (x) { return typeof x !== 'string' || !x.trim() || x.length > 300; })) return false;
@@ -149,11 +149,11 @@
     var local = [];
     Object.keys(skillsSeen).sort(function (a, b) { return skillsSeen[b] - skillsSeen[a]; }).forEach(function (k) { if (local.length < 5 && A.skills[k].kind === 'gen') { var it = A.freshItem(k, rng, st.seen); if (it) local.push(it); } });
     var cTopics = Object.keys(tops).filter(conceptTopic).sort(function (a, b) { return tops[b] - tops[a]; }).slice(0, 3);
-    if (!cTopics.length) cTopics = A.TOPICS.filter(function (t) { return t.ch >= 4 && conceptTopic(t.id); }).map(function (t) { return t.id; }).sort(function (a, b) { return A.topicStat(a).p - A.topicStat(b).p; }).slice(0, 2);
+    if (!cTopics.length) cTopics = A.TOPICS.filter(function (t) { return conceptTopic(t.id); }).map(function (t) { return t.id; }).sort(function (a, b) { return A.topicStat(a).p - A.topicStat(b).p; }).slice(0, 2);
     var want = Math.max(2, Math.min(3, 5 - Math.min(local.length, 2)));
     var missTxt = ms.map(function (m) { var s = A.skills[m.skill], it = null; try { it = A.makeItem(m.id); } catch (e) {} return '- ' + s.topic + ' ' + s.label + (it ? ': ' + String(it.stem).slice(0, 160) + ' (rule: ' + String(it.rule || '').slice(0, 120) + ')' : ''); }).join('\n');
     var ctx = cTopics.map(topicCtx).join('\n');
-    var prompt = RULES + '\n\nThe student recently missed these:\n' + missTxt + '\n\nTopic notes:\n' + ctx + '\n\nWrite ' + want + ' NEW conceptual multiple-choice questions (no calculations, no dollar figures needed) aimed at the same confusions, on these topic ids only: ' + cTopics.join(', ') + '. Four options, exactly one correct, plausible wrong options that each encode a real mistake. Reply with only JSON: {"items":[{"topic":"4E","stem":"...","options":["...","...","...","..."],"answer":0,"rule":"one sentence","why":["why A is wrong or right","...","...","..."]}]}';
+    var prompt = RULES + '\n\nThe student recently missed these:\n' + missTxt + '\n\nTopic notes:\n' + ctx + '\n\nWrite ' + want + ' NEW conceptual multiple-choice questions (no calculations, no dollar figures needed) aimed at the same confusions, worded differently from the missed questions (a new stem, a short scenario, or term and definition reversed) so the student has to recognise the idea rather than the wording, on these topic ids only: ' + cTopics.join(', ') + '. Four options, exactly one correct, plausible wrong options that each encode a real mistake. Reply with only JSON: {"items":[{"topic":"4E","stem":"...","options":["...","...","...","..."],"answer":0,"rule":"one sentence","why":["why A is wrong or right","...","...","..."]}]}';
     setStatus('Writing questions…');
     return S.json(prompt, { modelTier: 'default', signal: signal, cache: false }).then(function (r) {
       var raw = (r && r.items || []).filter(validItem).slice(0, want);

@@ -78,7 +78,23 @@ A.makeItem = function (id) {
   }
   return item;
 };
-A.bankItem = function (topic, idx, s, variant) {
+/* rewordings: a bank spec may carry `alts`, other phrasings of the same fact. Each alt is a string (a new stem, same
+   answer and wrong options) or an object overriding any of {q, a, w, why, rule, table, work} (e.g. term -> definition).
+   Wording k of a spec = alts[k-1] merged over the spec; wording 0 is the spec itself. The variant in the item id picks
+   the wording (variant % number of wordings) and the option order, so ids stay stable and old ids keep working. */
+A.wordings = function (s) {
+  var out = [s];
+  (s.alts || []).forEach(function (alt) {
+    if (!alt) return;
+    var o = typeof alt === 'string' ? { q: alt } : alt, m = {};
+    Object.keys(s).forEach(function (k) { if (k !== 'alts') m[k] = s[k]; });
+    Object.keys(o).forEach(function (k) { m[k] = o[k]; });
+    out.push(m);
+  });
+  return out;
+};
+A.bankItem = function (topic, idx, s0, variant) {
+  var ws = A.wordings(s0), wi = (variant || 0) % ws.length, s = ws[wi];
   var rng = A.mulberry32(A.hash('b' + topic + idx + ':' + (variant || 0)));
   var opts = [{ t: s.a, ok: true, why: null }];
   s.w.forEach(function (w, i) { opts.push({ t: w, ok: false, why: (s.why && s.why[i]) || null }); });
@@ -87,16 +103,41 @@ A.bankItem = function (topic, idx, s, variant) {
     id: null, topic: topic, skill: topic + '.bank', format: 'mc4', stem: s.q, table: s.table || null,
     options: opts.map(function (o) { return o.t; }), answer: opts.findIndex(function (o) { return o.ok; }),
     rule: s.rule || '', work: s.work || '', why: opts.map(function (o) { return o.why; }), je: s.je || null,
-    difficulty: s.diff || 1, calc: !!s.calc, general: !!s.general, seconds: s.seconds || (s.calc ? 75 : 40), num: null, src: s.src || null, twin: s.twin || null
+    difficulty: s.diff || 1, calc: !!s.calc, general: !!s.general, seconds: s.seconds || (s.calc ? 75 : 40), num: null, src: s.src || null, twin: s.twin || null,
+    wording: wi, wordings: ws.length
   };
+};
+/* which wording an item id shows (0 for generator items or banks without alts) */
+A.wordingOf = function (id) {
+  var p = A.parseId(id); if (p.kind !== 'b') return 0;
+  var s = (A.banks[p.topic] || [])[p.idx]; return s ? p.variant % A.wordings(s).length : 0;
+};
+/* pick the variant to show for bank question idx: the least-shown wording (never `avoid`, the one just missed, when
+   another exists), with the option order rotating on each showing */
+A.bankVariant = function (topic, idx, seen, avoid) {
+  var s = (A.banks[topic] || [])[idx]; if (!s) return 0;
+  var nW = A.wordings(s).length, pre = 'b:' + topic + ':' + idx + ':', byW = [], total = 0;
+  for (var w = 0; w < nW; w++) byW.push(0);
+  Object.keys(seen || {}).forEach(function (key) {
+    if (key.indexOf(pre) !== 0) return; var v = parseInt(key.slice(pre.length), 10); if (isNaN(v)) return;
+    var n = seen[key] || 0; byW[v % nW] += n; total += n;
+  });
+  var best = -1;
+  for (var k = 0; k < nW; k++) { if (nW > 1 && k === avoid) continue; if (best < 0 || byW[k] < byW[best]) best = k; }
+  if (best < 0) best = 0;
+  return best + nW * ((total % 1000) % 4);
 };
 /* pick N random generator ids for a topic (optionally a skill) */
 A.genId = function (topic, skill, seed) { return 'g:' + topic + ':' + skill + ':' + seed; };
 A.topicSkillIds = function (topic) { return Object.keys(A.skills).filter(function (k) { return A.skills[k].topic === topic; }); };
 /* make a fresh item for a skill id; avoid seeds/ids in `seen` */
-A.freshItem = function (skillId, rng, seen) {
+A.freshItem = function (skillId, rng, seen, prefer) {
   var sk = A.skills[skillId]; if (!sk) return null;
   seen = seen || {};
+  /* prefer = {idx, avoid}: bring back one bank question (a due miss) in a different wording */
+  if (prefer && sk.kind === 'bank' && (A.banks[sk.topic] || [])[prefer.idx]) {
+    return A.makeItem('b:' + sk.topic + ':' + prefer.idx + ':' + A.bankVariant(sk.topic, prefer.idx, seen, prefer.avoid));
+  }
   if (sk.kind === 'gen') {
     for (var t = 0; t < 12; t++) { var seed = Math.floor(rng() * 1e9); var id = A.genId(sk.topic, sk.skill, seed); if (!seen[id]) return A.makeItem(id); }
     return A.makeItem(A.genId(sk.topic, sk.skill, Math.floor(rng() * 1e9)));
@@ -109,7 +150,8 @@ A.freshItem = function (skillId, rng, seen) {
   var cnt = {}, pre = 'b:' + sk.topic + ':';
   Object.keys(seen).forEach(function (key) { if (key.indexOf(pre) === 0) { var ix = parseInt(key.slice(pre.length), 10); if (!isNaN(ix)) cnt[ix] = (cnt[ix] || 0) + (seen[key] || 0); } });
   for (var k = 0; k < idxs.length; k++) { var n = cnt[idxs[k]] || 0; if (n < bestN) { bestN = n; best = idxs[k]; if (n === 0) break; } }
-  return A.makeItem('b:' + sk.topic + ':' + best + ':' + ((bestN % 1000) % 4));
+  /* without alts this is the old (shows % 4) option-order rotation; with alts each showing also moves to a new wording */
+  return A.makeItem('b:' + sk.topic + ':' + best + ':' + A.bankVariant(sk.topic, best, seen));
 };
 
 /* journal-entry lines [[account, debit|null, credit|null], ...] as one string (used by JE options, the JE builder and the AI) */

@@ -5,7 +5,7 @@ A Claude skill plus the engine it uses to turn a folder of class files into an a
 Give Claude your course folder (slides, notes, lecture transcripts, solutions, syllabus, a sample exam) and say *"make me a study guide for Exam 3."* It asks a few questions, proposes how many exam questions each topic carries, and builds and publishes a single-page app with:
 
 - **Lessons** for every exam topic (rule cards, worked examples, "your turn" steps, exam traps)
-- **Practice that never runs out**: number generators make fresh calculation questions; written banks cover concepts. Misses come back on a spaced schedule, and the same question never repeats within 15
+- **Practice that never runs out**: number generators make fresh calculation questions; written banks cover concepts, and every concept question comes in several wordings so repeats test the idea, not the sentence. Misses come back on a spaced schedule in a different wording from the one missed, and the same question never repeats within 15
 - **Mocks** on the exact exam blueprint, plus the instructor's **sample exam sealed** as a timed dress rehearsal
 - A **schedule that re-plans from now**. If you start late, it trims the least-tested topics instead of telling you that you're behind
 - **Full tier extras**: a live predicted score (Elo-style, two decimals, +/− after every answer), weak spots, flashcards, calc sprint, walk-in sheet, narrated audio, an AI tutor, phone ↔ laptop sync, and an optional daily puzzle with a push reminder

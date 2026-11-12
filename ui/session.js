@@ -4,7 +4,9 @@ U.views.session = { tab: 'endless', render: function (main, p) {
   var area = U.h('div'), counters = U.h('div', { class: 'counter' });
   var chips = U.h('div', { class: 'row' });
   var head = U.h('div', { class: 'stack' }, U.h('div', { class: 'qhead' }, U.h('div', null, U.h('div', { class: 'eyebrow' }, p.onlyMisses ? 'Misses' : (p.topics ? 'Topic drill' : 'Endless')), U.h('h1', { class: 'h2' }, p.title || 'Endless practice')), counters), p.noFilter ? null : chips);
-  main.appendChild(U.h('div', { class: 'stack' }, head, area));
+  /* Full tier with AI: fresh, newly worded questions on recent misses (the AI weak-spot set) one tap away */
+  var aiRow = (A.FEAT && A.FEAT.ai && U.aiShow && !p.onlyMisses) ? U.aiShow(U.h('div', { class: 'row' }, U.h('button', { class: 'btn ghost sm', type: 'button', title: 'Five brand-new questions on your latest misses, worded differently', onclick: function () { U.go('aiset'); } }, 'Fresh AI questions on my misses'))) : null;
+  main.appendChild(U.h('div', { class: 'stack' }, head, aiRow, area));
   var chapter = p.chapter || 0;
   function paintCounters() { var s = A.store.state; U.clear(counters); counters.appendChild(U.h('span', null, 'Session ', U.h('b', null, stats.c + '/' + stats.n))); counters.appendChild(U.h('span', null, 'Streak ', U.h('b', null, s.streak.cur))); counters.appendChild(U.h('span', null, 'Misses ', U.h('b', null, A.activeMisses(s).length))); }
   function paintChips() {

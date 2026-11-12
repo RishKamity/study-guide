@@ -59,16 +59,33 @@ OK(`generators: ${gTotal} items checked, ${gBad} bad`);
 
 /* ---- banks ---- */
 let bN = 0, bBad = 0; const stemSeen = {};
+let altN = 0; const altFew = {};   /* topic -> [questions with fewer than 2 rewordings] (concept-only topics) */
 for (const t of Object.keys(A.banks)) A.banks[t].forEach((s, i) => {
-  const key = (s.q || '').trim().toLowerCase(); if (stemSeen[key]) WARN(`bank ${t}#${i}: same question as ${stemSeen[key]}`); stemSeen[key] = t + '#' + i;
-  for (let v = 0; v < 3; v++) { bN++;
+  const ws = A.wordings(s), nW = ws.length;
+  ws.forEach((w, k) => {
+    const key = (w.q || '').trim().toLowerCase(), tag = t + '#' + i + (k ? ' alt ' + k : '');
+    if (stemSeen[key]) WARN(`bank ${tag}: same question as ${stemSeen[key]}`); stemSeen[key] = tag;
+    if (k && (!w.q || w.q.trim().length < 15)) FAIL(`bank ${tag}: rewording needs a full question (15+ characters)`);
+  });
+  altN += nW - 1;
+  /* every wording, each in a few option orders (variant v shows wording v % nW) */
+  for (let v = 0; v < Math.max(3, nW * 2); v++) { bN++; const w = ws[v % nW], tag = t + '#' + i + (v % nW ? ' alt ' + (v % nW) : '');
     try { const it = A.makeItem('b:' + t + ':' + i + ':' + v);
       if (it.options.length !== 4 || new Set(it.options).size !== 4) throw new Error('needs 4 distinct options');
-      if (it.options[it.answer] !== s.a) throw new Error('answer text not at the key');
-      if (!s.rule) throw new Error('missing rule'); if (s.w.length !== 3) throw new Error('needs exactly 3 wrong options');
-      if ((s.why || []).length !== 3) throw new Error('needs 3 reasons (one per wrong option)');
-    } catch (e) { bBad++; if (v === 0) FAIL(`bank ${t}#${i}: ${e.message}`); } } });
-OK(`banks: ${bN} item variants checked, ${bBad} bad`);
+      if (it.options[it.answer] !== w.a) throw new Error('answer text not at the key');
+      if (it.stem !== w.q) throw new Error('wrong wording shown for this variant');
+      if (!w.rule) throw new Error('missing rule'); if ((w.w || []).length !== 3) throw new Error('needs exactly 3 wrong options');
+      if ((w.why || []).length !== 3) throw new Error('needs 3 reasons (one per wrong option)');
+    } catch (e) { bBad++; if (v < nW) FAIL(`bank ${tag}: ${e.message}`); } }
+  if (!s.calc && nW < 3) (altFew[t] = altFew[t] || []).push(i);
+});
+OK(`banks: ${bN} item variants checked (${altN} rewordings), ${bBad} bad`);
+/* rewording: concept questions should come in 3+ wordings so repeats test the idea, not the wording */
+for (const t of Object.keys(altFew)) {
+  const sk = A.topicSkillIds(t), gens = sk.filter(k => A.skills[k].kind === 'gen').length; if (gens) continue;
+  const n = (A.banks[t] || []).length, few = altFew[t].length;
+  if (few / n > 0.2) WARN(`topic ${t}: ${few}/${n} concept questions have fewer than 2 rewordings (alts) — add alts so repeats and returning misses use new wording`);
+}
 
 /* ---- pool sizes: concept-only topics loop if their bank is small ---- */
 examTopics.forEach(t => {
@@ -104,7 +121,7 @@ if (A.SAMPLE_READY) {
   const numsOf = txt => new Set((String(txt).match(/\$?\d[\d,]{3,}(\.\d+)?/g) || []).map(n => n.replace(/[$,]/g, '')).filter(distinct));
   const perQ = A.SAMPLE.map(q => numsOf(q.stem + ' ' + (q.table ? JSON.stringify(q.table) : '')));
   const texts = [];
-  for (const t of Object.keys(A.banks)) A.banks[t].forEach((s, i) => texts.push(['bank ' + t + '#' + i, s.q + ' ' + s.a + ' ' + (s.w || []).join(' ') + ' ' + (s.work || '')]));
+  for (const t of Object.keys(A.banks)) A.banks[t].forEach((s, i) => A.wordings(s).forEach((w, k) => texts.push(['bank ' + t + '#' + i + (k ? ' alt ' + k : ''), w.q + ' ' + w.a + ' ' + (w.w || []).join(' ') + ' ' + (w.work || '')])));
   for (const [id, s] of Object.entries(A.STATIONS)) texts.push(['station ' + id, JSON.stringify(s)]);
   (A.FLASHCARDS || []).forEach(c => { if (!c.sample) texts.push(['flashcard ' + c.id, c.front + ' ' + c.back]); });
   /* generator output (30 seeds per skill) and the reference sheet are practice material too */

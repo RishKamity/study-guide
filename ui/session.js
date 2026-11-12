@@ -8,7 +8,11 @@ U.views.session = { tab: 'endless', render: function (main, p) {
   var aiRow = (A.FEAT && A.FEAT.ai && U.aiShow && !p.onlyMisses) ? U.aiShow(U.h('div', { class: 'row' }, U.h('button', { class: 'btn ghost sm', type: 'button', title: 'Five brand-new questions on your latest misses, worded differently', onclick: function () { U.go('aiset'); } }, 'Fresh AI questions on my misses'))) : null;
   main.appendChild(U.h('div', { class: 'stack' }, head, aiRow, area));
   var chapter = p.chapter || 0;
-  function paintCounters() { var s = A.store.state; U.clear(counters); counters.appendChild(U.h('span', null, 'Session ', U.h('b', null, stats.c + '/' + stats.n))); counters.appendChild(U.h('span', null, 'Streak ', U.h('b', null, s.streak.cur))); counters.appendChild(U.h('span', null, 'Misses ', U.h('b', null, A.activeMisses(s).length))); }
+  /* optional timed session (p.minutes): the clock runs, and when it hits zero the next question becomes a summary */
+  var endAt = p.minutes ? Date.now() + p.minutes * 60000 : 0, clockEl = U.h('b'), tick = null;
+  function left() { var ms = Math.max(0, endAt - Date.now()); return Math.floor(ms / 60000) + ':' + String(Math.floor(ms % 60000 / 1000)).padStart(2, '0'); }
+  if (endAt) tick = setInterval(function () { clockEl.textContent = left(); }, 1000);
+  function paintCounters() { var s = A.store.state; U.clear(counters); if (endAt) { clockEl.textContent = left(); counters.appendChild(U.h('span', null, 'Time ', clockEl)); } counters.appendChild(U.h('span', null, 'Session ', U.h('b', null, stats.c + '/' + stats.n))); counters.appendChild(U.h('span', null, 'Streak ', U.h('b', null, s.streak.cur))); counters.appendChild(U.h('span', null, 'Misses ', U.h('b', null, A.activeMisses(s).length))); }
   function paintChips() {
     U.clear(chips); if (p.onlyMisses || p.topics) return;
     U.unitChips(true).forEach(function (c) { chips.appendChild(U.h('button', { class: 'btn sm ' + ((chapter === c[1]) ? '' : 'ghost'), onclick: function () { chapter = c[1]; paintChips(); next(); } }, c[0])); });
@@ -23,7 +27,14 @@ U.views.session = { tab: 'endless', render: function (main, p) {
     return it;
   }
   function next() {
-    U.clear(area); var it = getItem();
+    U.clear(area);
+    if (endAt && Date.now() >= endAt) {
+      if (tick) { clearInterval(tick); tick = null; }
+      area.appendChild(U.h('div', { class: 'card stack' }, U.h('div', { class: 'eyebrow' }, 'Time'), U.h('h2', { class: 'h2' }, 'Drill done: ' + stats.c + ' of ' + stats.n + ' right'), U.h('p', { class: 'muted' }, stats.n ? 'Misses will come back later in a different wording.' : 'Nothing answered this time.'),
+        U.h('div', { class: 'row' }, U.h('button', { class: 'btn', onclick: function () { endAt = Date.now() + p.minutes * 60000; tick = setInterval(function () { clockEl.textContent = left(); }, 1000); stats = { n: 0, c: 0 }; next(); } }, 'Another ' + p.minutes + ' minutes'), U.h('button', { class: 'btn ghost', onclick: function () { U.go('session', { title: 'Endless practice' }); } }, 'Keep going in Endless'), U.h('button', { class: 'btn ghost', onclick: function () { U.go('today'); } }, 'Back to Today'))));
+      paintCounters(); return;
+    }
+    var it = getItem();
     if (!it) {
       if (p.onlyMisses) { area.appendChild(U.h('div', { class: 'card stack' }, U.h('h2', { class: 'h2' }, 'Misses queue is clear'), U.h('p', { class: 'muted' }, 'Nothing is waiting. Keep going with Endless or start the next station.'), U.h('button', { class: 'btn', onclick: function () { U.go('today'); } }, 'Back to Today'))); }
       else area.appendChild(U.h('div', { class: 'card stack' }, U.h('h2', { class: 'h2' }, 'Nothing in your pool yet'), U.h('p', { class: 'muted' }, 'Endless draws from topics you have started. Start a station on the Path, or tick “include topics I have not started”.'), U.h('button', { class: 'btn', onclick: function () { U.go('path'); } }, 'Open Path')));
@@ -35,5 +46,5 @@ U.views.session = { tab: 'endless', render: function (main, p) {
     area.appendChild(U.h('div', { class: 'card' }, q, skip)); U.keyFn = function (e) { if (!q.keys(e) && skip.isConnected && e.key.toLowerCase() === 'n') { A.noteSeen(it); next(); } }; paintCounters();
   }
   paintChips(); paintCounters(); next();
-  return function () { U.keyFn = null; };
+  return function () { U.keyFn = null; if (tick) clearInterval(tick); };
 } };

@@ -53,7 +53,12 @@
     var facts = (C.facts || []).length ? h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Exam facts'), h('ul', { class: 'small muted', style: { margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' } }, C.facts.map(function (f) { return h('li', null, f); }))) : null;
     var oh = null; (C.officeHours || []).forEach(function (o) { if (!oh && now < Date.parse(o.end)) oh = h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Office hours'), h('p', { class: 'small' }, o.text), officeList(s)); });
     var daily = U.dailyCard ? U.dailyCard() : null;
-    main.appendChild(h('div', { class: 'stack' }, hero, planCard(s, now), daily, oh, go, predCard, missCard, h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Topic map'), heat, h('p', { class: 'small dim' }, 'Red is learning, amber is shaky, green is solid. Grey is untouched.')), facts));
+    /* course option: a one-tap timed drill as the first thing on screen */
+    var qs = C.quickStart ? h('div', { class: 'card stack', style: { borderColor: 'var(--accent)' } }, h('div', { class: 'eyebrow' }, 'Start here'), h('div', { class: 'h2' }, C.quickStart.title || (C.quickStart.minutes + '-minute drill')), C.quickStart.blurb ? h('p', { class: 'muted small' }, C.quickStart.blurb) : null,
+      h('button', { class: 'btn block', 'data-quick': '1', onclick: function () { U.go('session', { title: C.quickStart.title || 'Quick drill', minutes: C.quickStart.minutes || 5, includeNew: true, noFilter: true }); } }, 'Start ' + (C.quickStart.minutes || 5) + '-minute drill')) : null;
+    /* course option: time-windowed notes (e.g., a night-before plan) */
+    var notes = (C.notes || []).filter(function (n) { return now >= Date.parse(n.from) && now < Date.parse(n.to); }).map(function (n) { return h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Tonight'), h('div', { class: 'h2' }, n.title), h('ol', { class: 'small', style: { margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' } }, n.items.map(function (x) { return h('li', null, x); }))); });
+    main.appendChild(h('div', { class: 'stack' }, qs, notes.length ? h('div', { class: 'stack' }, notes) : null, hero, planCard(s, now), daily, oh, go, predCard, missCard, h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Topic map'), heat, h('p', { class: 'small dim' }, 'Red is learning, amber is shaky, green is solid. Grey is untouched.')), facts));
     return function () { clearInterval(tm); };
   } };
 
@@ -189,6 +194,6 @@
       }
     }
     main.appendChild(h('div', { class: 'stack' }, h('h1', { class: 'h1' }, 'Mock exams'), h('p', { class: 'muted' }, 'Three generated ' + A.MOCK_N + '-question mocks on the exact blueprint, plus the official sample. Paper-style, 50 minutes, no feedback until you submit.'),
-      mockCard('mockA', 'Take it right after the Chapter 7 stations.'), sc, mockCard('mockB', 'Best after the dress rehearsal, if time allows or a score is under 85%.'), mockCard('mockC', 'Offered if A or B is under 80%.')));
+      mockCard('mockA', 'Take it after your last station, under exam conditions.'), sc, mockCard('mockB', 'Best after the dress rehearsal, if time allows or a score is under 85%.'), mockCard('mockC', 'Offered if A or B is under 80%.')));
   } };
 })();

@@ -26,8 +26,13 @@ A.topicStat = function (tid, st) {
   });
   if (!n) return { n: 0, p: null, state: 'new', mastered: false };
   var p = num / den, state = p < 0.6 ? 'learning' : (p < 0.85 ? 'shaky' : 'solid');
-  var mastered = false;
-  if (p >= 0.85 && corr.length >= 3) { corr.sort(function (a, b) { return a - b; }); mastered = (corr[corr.length - 1] - corr[0]) >= 2 * A.HOUR; }
+  var mastered = false, MS = A.COURSE.mastery && A.COURSE.mastery.streak;
+  if (MS) {
+    /* course option: mastered = the last N first-try answers on this topic were all correct */
+    var all = []; ids.forEach(function (sid) { var s2 = st.skills[sid]; if (s2) s2.a.forEach(function (x) { all.push(x); }); });
+    all.sort(function (a, b) { return b[1] - a[1]; });
+    mastered = all.length >= MS && all.slice(0, MS).every(function (x) { return x[2] === 1; });
+  } else if (p >= 0.85 && corr.length >= 3) { corr.sort(function (a, b) { return a - b; }); mastered = (corr[corr.length - 1] - corr[0]) >= 2 * A.HOUR; }
   if (mastered) state = 'mastered';
   return { n: n, p: p, state: state, mastered: mastered };
 };

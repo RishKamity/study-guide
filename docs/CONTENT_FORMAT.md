@@ -56,7 +56,11 @@ A.COURSE = {
   tutor: { context: 'You are a tutor for ...', conventions: 'course-specific rules the AI must follow' },
   walkIn: { title: '... walk-in sheet', travel: 'Play the walk-in sheet track on the way to ...' },
   officeHours: [{ end: '2026-12-09T15:00:00-05:00', text: 'Office hours Wed 1-3 PM, ...' }],
-  schedule: { windows: [['09:00', '12:30'], ['13:30', '17:30'], ['18:30', '23:00']], stopBeforeExam: 45, pace: 1.25 }
+  schedule: { windows: [['09:00', '12:30'], ['13:30', '17:30'], ['18:30', '23:00']], stopBeforeExam: 45, pace: 1.25,
+              hoursPerDay: 2, hoursByDate: { '2026-12-08': 4 } },   // optional daily cap, with per-date overrides (local dates)
+  mastery: { streak: 2 },            // optional: a topic is mastered when its last N first-try answers were all correct
+  quickStart: { minutes: 5, title: '5-minute drill', blurb: '...' },   // optional: one-tap timed drill as the first card on Today
+  notes: [{ from: ISO, to: ISO, title: 'Night-before plan', items: ['...'] }]   // optional: cards shown on Today inside a time window
 };
 A.TOPICS = [
   // id: short and stable ('9A'); ch: unit id (0 = boot camp); exam: integer questions on the exam (mock blueprint);

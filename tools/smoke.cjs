@@ -38,6 +38,24 @@ const shots = path.join(dir, 'shots'); fs.mkdirSync(shots, { recursive: true });
     const ans = await p.evaluate(() => { const o = document.querySelector('.opt .optmain'); if (!o) return false; o.click(); const c = document.querySelector('.conf button'); if (c) c.click(); return true; }); await p.waitForTimeout(150);
     log(ans && await p.evaluate(() => /Rule|Answer/i.test(document.querySelector('main').innerText)), `${tag}: Endless question answers and explains`);
     await lastTappable('a revealed answer'); await p.evaluate(() => { const r = document.querySelector('.reveal'); if (r) r.scrollIntoView({ block: 'start' }); }); await p.screenshot({ path: path.join(shots, `${tag}-endless-reveal.png`) });
+    // Clear misses: one wrong answer, then two right answers in the misses session must empty the queue
+    if (info.F.drills) {
+      const left = await p.evaluate(async () => {
+        const st = A.store.state; Object.keys(st.misses).forEach(k => delete st.misses[k]);
+        const sk = Object.keys(A.skills)[0], it = A.freshItem(sk, A.mulberry32(7), {});
+        A.recordAnswer({ item: it, chosen: (it.answer + 1) % it.options.length, conf: 1, mode: 'learn' });
+        if (A.activeMisses(st).length !== 1) return 'no miss was created';
+        const orig = U.question; U.question = function (item, o) { window.__smokeItem = item; return orig(item, o); };
+        U.go('session', { title: 'Clear your Misses', onlyMisses: true });
+        for (let k = 0; k < 2; k++) {
+          const opt = document.querySelectorAll('.opt .optmain')[window.__smokeItem.answer]; if (!opt) return 'no question after ' + k + ' answers';
+          opt.click(); const c = document.querySelector('.conf button'); if (c) c.click();
+          const nx = Array.from(document.querySelectorAll('main .btn.block')).find(b => /next/i.test(b.textContent)); if (nx) nx.click();
+        }
+        U.question = orig; return A.activeMisses(st).length;
+      });
+      log(left === 0, `${tag}: Clear misses empties the queue after two correct answers${left === 0 ? '' : ' (' + left + ' left)'}`);
+    }
     // a mini-mock start to finish
     if (info.F.minimocks) {
       await p.evaluate((u) => U.openSeq({ type: 'minimock', id: 'mm' + u, ch: u, title: 'Mini-mock' }), info.unit); await p.waitForTimeout(150);

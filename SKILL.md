@@ -123,4 +123,5 @@ Tell the student in 3-6 lines: what the guide has (tier, number of topics, quest
 - **Paraphrases were labeled as quotes.** Only verbatim transcript fragments go in quote marks.
 - **Answers you cannot verify in code get checked by hand against the official solution**, and disagreements go in `CONFLICTS.md` with your reasoning.
 - **Look at the screenshots.** A layout bug hid every bottom button under the tab bar on phones; tests that only read text did not catch it.
+- **Clear misses never cleared** (CS 159 build): the misses session did not tell the question it was in misses mode, so six right answers in a row left the miss in the queue. `smoke.cjs` now checks that two right answers empty the queue; keep that check when changing the session or the misses rules.
 - **Start the audio render early.** It is the slowest step and runs fine in the background.

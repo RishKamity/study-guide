@@ -29,7 +29,7 @@ U.views.session = { tab: 'endless', render: function (main, p) {
     }
     lastSkill = it.skill; cur = it;
     var skip = U.h('div', { class: 'skiprow' }, U.h('button', { class: 'btn ghost sm', type: 'button', title: 'Skip this question (no effect on your score)', onclick: function () { A.noteSeen(it); next(); } }, 'Skip \u2192'));
-    var q = U.question(it, { label: 'Q' + (stats.n + 1), onAnswer: function (r) { stats.n++; if (r.correct) stats.c++; paintCounters(); skip.remove(); }, onNext: next, nextLabel: 'Next question' });
+    var q = U.question(it, { label: 'Q' + (stats.n + 1), mode: p.onlyMisses ? 'misses' : undefined, onAnswer: function (r) { stats.n++; if (r.correct) stats.c++; paintCounters(); skip.remove(); }, onNext: next, nextLabel: 'Next question' });
     area.appendChild(U.h('div', { class: 'card' }, q, skip)); U.keyFn = function (e) { if (!q.keys(e) && skip.isConnected && e.key.toLowerCase() === 'n') { A.noteSeen(it); next(); } }; paintCounters();
   }
   paintChips(); paintCounters(); next();

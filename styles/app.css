@@ -294,3 +294,11 @@ pre.code{font-family:var(--font-m);font-size:13px;line-height:1.45;background:va
 .optpre{white-space:pre-wrap;font-family:var(--font-m);font-size:14px}
 @media (max-width:440px){pre.code{font-size:12px;padding:8px 10px;margin:6px 0}}
 @media (max-width:440px){.optpre{font-size:12.5px}}
+
+/* score margin and mastery bars */
+.chip-score .pm{font:500 11px var(--font-m);color:var(--text-2)}
+.scorebig .pm{font:500 18px var(--font-m);color:var(--text-2);margin-left:8px}
+.mbars{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.mbar{display:flex;flex-direction:column;gap:4px;align-items:stretch;background:none;border:1px solid var(--line);border-radius:10px;padding:6px 8px;text-align:left}
+.mbar small{font:600 11px var(--font-m);color:var(--text-2)}.mbar i{display:block;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.mbar u{display:block;height:100%;background:var(--accent);text-decoration:none}.mbar.full{border-color:var(--good)}.mbar.full u{background:var(--good)}

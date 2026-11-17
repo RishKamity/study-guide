@@ -26,17 +26,19 @@ A.topicStat = function (tid, st) {
   });
   if (!n) return { n: 0, p: null, state: 'new', mastered: false };
   var p = num / den, state = p < 0.6 ? 'learning' : (p < 0.85 ? 'shaky' : 'solid');
-  var mastered = false;
-  if (p >= 0.85 && corr.length >= 3) { corr.sort(function (a, b) { return a - b; }); mastered = (corr[corr.length - 1] - corr[0]) >= 2 * A.HOUR; }
+  var mm = A.topicMastery(tid, st), mastered = mm.total > 0 && mm.done === mm.total;
   if (mastered) state = 'mastered';
   return { n: n, p: p, state: state, mastered: mastered };
 };
+/* mastery: a question type is mastered when its last two answers are right; a topic when all of its types are */
+A.skillMastered = function (sid, st) { st = st || A.store.state; var s = st.skills[sid]; return !!(s && s.a.length >= 2 && s.a[0][2] === 1 && s.a[1][2] === 1); };
+A.topicMastery = function (tid, st) { st = st || A.store.state; var ids = A.topicSkillIds(tid); return { done: ids.filter(function (sid) { return A.skillMastered(sid, st); }).length, total: ids.length }; };
 A.stateLabel = { new: 'New', learning: 'Learning', shaky: 'Shaky', solid: 'Solid', mastered: 'Mastered' };
 
 /* predicted score: sum over exam topics of Qs * p (0.25 if New). returns {pts(0-100), lo, hi, qs} */
 A.predicted = function () {
-  var sc = A.score.now(), n = A.score.events().length, half = 14 / Math.sqrt(1 + n / 25);
-  return { pts: sc.pct, lo: Math.max(25, sc.pct - half), hi: Math.min(100, sc.pct + half), ch: sc.ch, n: n };
+  var sc = A.score.now(), n = A.score.events().length, half = sc.pm !== undefined ? sc.pm : 14 / Math.sqrt(1 + n / 25);
+  return { pts: sc.pct, pm: half, lo: Math.max(0, sc.pct - half), hi: Math.min(100, sc.pct + half), ch: sc.ch, n: n };
 };
 
 /* ---------- recording answers ---------- */

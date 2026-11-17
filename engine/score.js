@@ -1,40 +1,60 @@
-/* score.js — Elo-style predicted score.
-   Each exam topic has a rating. Each answer is an event {i,t,k,d,o,w}: id, time, topic, item rating, outcome 0/1, weight.
-   Ratings are rebuilt by replaying events in time order, so merging two devices is a plain union of events:
-   nothing is ever overwritten, and an older open tab can never erase progress.
-   Events live in their own localStorage key and their own db doc (data/users/<id>/score), separate from the main state. */
+/* score.js — predicted score from your hit rate.
+   Each answer is an event {i,t,k,d,o,w}: id, time, topic, item rating (difficulty), outcome 0/1, weight.
+   Each exam topic's estimate is its recent, difficulty-adjusted hit rate, pulled toward your overall hit rate
+   (topics share evidence) and, before there is evidence, toward a fair middle guess. The predicted score is the
+   exam-weighted sum of topic estimates; a full mock or the sample exam blends in at 40%. The ± is the 80% margin.
+   Events live in their own localStorage key and their own db doc (data/users/<id>/score); the score is rebuilt by
+   replaying them, so merging two devices is a plain union and any model change re-scores the same history. */
 (function () {
-  var C = A.SCORE = { E: 1325, DIFF: { 1: 1150, 2: 1300, 3: 1450 }, SAMPLE_D: 1350, TF_D: 1150, G0: 1100, OFF0: -100, KG: 8, K_PROV: 100, K: 40, PROV_N: 8,
-    GRACE: 24 * 3600e3, DECAY_PER_DAY: 15, DECAY_MAX: 60, FLOOR: 1 / (A.COURSE.format.options || 4), MAX_EV: 15000, LSK: A.KEY('score') };
+  var C = A.SCORE = { E: 1325, DIFF: { 1: 1150, 2: 1300, 3: 1450 }, SAMPLE_D: 1350, TF_D: 1150,
+    PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28,
+    GRACE: 24 * 3600e3, DECAY_DAY: 0.9, DECAY_MIN: 0.6, FLOOR: 1 / (A.COURSE.format.options || 4), CEIL: 0.995, MAX_EV: 15000, LSK: A.KEY('score') };
   var TOPS = Object.keys(A.SCORE_W), TOTW = TOPS.reduce(function (s, k) { return s + A.SCORE_W[k]; }, 0) || 1;
+  /* kept for tests and simulations: chance a student of rating r gets an item of rating d right */
   function expct(r, d) { return 1 / (1 + Math.pow(10, (d - r) / 400)); }
   A.pCorrect = function (r, d) { return C.FLOOR + (1 - C.FLOOR) * expct(r, d === undefined ? C.E : d); };
-  function decayAmt(gapMs) { var g = gapMs - C.GRACE; if (g <= 0) return 0; return Math.min(C.DECAY_MAX, C.DECAY_PER_DAY * g / 864e5); }
-  function fresh() { return { r: C.OFF0, n: 0, last: 0, dec: 0 }; }
-  function gOf(T) { return T._g ? T._g.g : C.G0; }
-  function settle(tt, t) { if (!tt.last) return; var want = decayAmt(t - tt.last); if (want > tt.dec) { tt.r -= (want - tt.dec); tt.dec = want; } }
+  /* harder items count more when right, easier items count more when wrong */
+  function dmult(d) { return Math.max(0.85, Math.min(1.15, 1 + ((d || 1300) - 1300) / 1000)); }
+  function timeF(t, now) { var g = now - t - C.GRACE; if (g <= 0) return 1; return Math.max(C.DECAY_MIN, Math.pow(C.DECAY_DAY, g / 864e5)); }
+  function fresh() { return { all: [], top: {}, cal: [] }; }
   function applyEv(T, e) {
-    var G = T._g || (T._g = { g: C.G0 });
-    if (e[2] === '*') { G.g += e[5]; return; }
-    var tt = T[e[2]] || (T[e[2]] = fresh()); settle(tt, e[1]);
-    var p = A.pCorrect(G.g + tt.r, e[3]), K = tt.n < C.PROV_N ? C.K_PROV : C.K, delta = e[5] * (e[4] - p);
-    G.g += C.KG * delta / (1 + tt.n / 8); tt.r += K * delta; tt.n++; tt.last = e[1]; tt.dec = 0;
+    if (e[2] === '*') { if (e[4] === 2) T.cal.push([e[1], e[3]]); return; }    /* v1 rating-shift events (e[4] !== 2) are ignored */
+    var x = [e[1], e[3], e[4], e[5]]; T.all.push(x); (T.top[e[2]] || (T.top[e[2]] = [])).push(x);
   }
-  function rAt(tt, now) { if (!tt) return C.OFF0; var want = decayAmt(now - (tt.last || now)); return tt.r - Math.max(0, want - tt.dec); }
+  function tally(list, win, rec, now) {
+    var w = 0, c = 0, f = 1, n = 0;
+    for (var q = 0; q < list.length; q++) n += list[q][3] * timeF(list[q][0], now);   /* all evidence, for the margin */
+    for (var i = list.length - 1, j = 0; i >= 0 && j < win; i--, j++) {
+      var x = list[i], m = x[2] ? dmult(x[1]) : 2 - dmult(x[1]), ew = x[3] * f * timeF(x[0], now) * m;
+      w += ew; if (x[2]) c += ew; f *= rec;
+    }
+    return { w: w, c: c, n: n };
+  }
+  function clampP(p) { return Math.max(C.FLOOR, Math.min(C.CEIL, p)); }
   function scoreOf(T, now) {
-    var tot = 0, ch = {}, per = {}; A.UNITS.forEach(function (u) { ch[u] = [0, 0]; });
-    TOPS.forEach(function (k) { var w = A.SCORE_W[k], p = A.pCorrect(gOf(T) + rAt(T[k], now)); per[k] = p; tot += w * p; var c = A.TOPIC[k].ch; if (ch[c]) { ch[c][0] += w * p; ch[c][1] += w; } });
-    var chp = {}, totw = 0; Object.keys(ch).forEach(function (c) { if (ch[c][1]) chp[c] = 100 * ch[c][0] / ch[c][1]; }); TOPS.forEach(function (k) { totw += A.SCORE_W[k]; });
-    return { pct: 100 * tot / (totw || 1), ch: chp, per: per };
+    /* overall hit rate; it only spreads to other topics as far as you have covered the exam (one farmed topic cannot lift the rest) */
+    var g = tally(T.all, C.ALL_WIN, C.ALL_REC, now), m0 = (C.PRIOR_N * C.PRIOR + g.c) / (C.PRIOR_N + g.w);
+    var cov = TOPS.reduce(function (a, k) { return a + Math.min(1, (T.top[k] || []).reduce(function (q, x) { return q + x[3]; }, 0) / 2); }, 0) / (TOPS.length || 1), m = C.PRIOR + (m0 - C.PRIOR) * cov;
+    var tot = 0, ch = {}, per = {}, v = 0; A.UNITS.forEach(function (u) { ch[u] = [0, 0]; });
+    TOPS.forEach(function (k) {
+      var w = A.SCORE_W[k], tt = tally(T.top[k] || [], C.TOPIC_WIN, C.TOPIC_REC, now), p = clampP((C.TOPIC_N * m + tt.c) / (C.TOPIC_N + tt.w));
+      per[k] = p; tot += w * p; v += Math.pow(w / TOTW, 2) * p * (1 - p) / (C.TOPIC_N + tt.n);
+      var c = A.TOPIC[k].ch; if (ch[c]) { ch[c][0] += w * p; ch[c][1] += w; }
+    });
+    var chp = {}; Object.keys(ch).forEach(function (c) { if (ch[c][1]) chp[c] = 100 * ch[c][0] / ch[c][1]; });
+    var pct = 100 * tot / TOTW; v += 0.5 * m * (1 - m) / (C.PRIOR_N + g.n * cov);
+    var cal = T.cal.length ? T.cal[T.cal.length - 1] : null, pm = 100 * C.Z * Math.sqrt(v);
+    if (cal) { pct = (1 - C.MOCK_W) * pct + C.MOCK_W * cal[1]; pm *= (1 - C.MOCK_W); }
+    return { pct: pct, ch: chp, per: per, pm: Math.max(0.5, pm), overall: m };
   }
   function cmp(a, b) { return a[1] - b[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0); }
 
   /* ---------- store ---------- */
-  var ev = [], ids = {}, T = {}, lastT = 0, listeners = [], dirty = false;
+  var ev = [], ids = {}, T = fresh(), lastT = 0, listeners = [], dirty = false;
   function lsLoad() { try { var o = JSON.parse(localStorage.getItem(C.LSK) || 'null'); if (o && o.v === 1 && Array.isArray(o.ev)) return o.ev; } catch (e) {} return []; }
   function lsSave() { try { localStorage.setItem(C.LSK, JSON.stringify({ v: 1, ev: ev })); } catch (e) {} }
   function valid(e) { return Array.isArray(e) && e.length === 6 && typeof e[0] === 'string' && typeof e[1] === 'number' && typeof e[2] === 'string' && typeof e[5] === 'number' && isFinite(e[5]); }
-  function rebuild() { ev.sort(cmp); T = {}; ev.forEach(function (e) { applyEv(T, e); }); lastT = ev.length ? ev[ev.length - 1][1] : 0; }
+  function rebuild() { ev.sort(cmp); T = fresh(); ev.forEach(function (e) { applyEv(T, e); }); lastT = ev.length ? ev[ev.length - 1][1] : 0; }
   function trim() { if (ev.length > C.MAX_EV) { ev.sort(cmp); var cut = ev.splice(0, ev.length - C.MAX_EV); cut.forEach(function (e) { delete ids[e[0]]; }); } }
   function emit(prev, live) { var cur = A.score.now(); listeners.forEach(function (f) { try { f(cur, prev, live); } catch (e) {} }); }
   function insert(list) {
@@ -60,6 +80,7 @@
     if (o.retake) w *= 0.25;
     if (o.conf === 2) w *= 0.5;
     if (o.conf === 0 && !o.correct) w *= 1.5;
+    if (o.mode === 'check') w *= 1.5;
     return w;
   }
   A.score = {
@@ -85,26 +106,30 @@
       return add.length;
     },
     merge: function (list) { if (!Array.isArray(list)) return 0; var prev = A.score.now(); var n = insert(list); if (n) emit(prev, false); return n; },
-    /* after a full mock: move every topic so the prediction goes halfway toward the real result */
+    /* after a full mock or the sample exam: the latest result blends into the prediction at MOCK_W */
     calibrate: function (id, t, actualPct) {
-      if (ids[id]) return; var cur = scoreOf(T, t).pct, target = cur + 0.5 * (actualPct - cur);
-      var lo = -300, hi = 300;
-      for (var it = 0; it < 40; it++) { var mid = (lo + hi) / 2, T2 = JSON.parse(JSON.stringify(T)); applyEv(T2, ['x', t, '*', 0, 0, mid]); if (scoreOf(T2, t).pct < target) lo = mid; else hi = mid; }
-      var s = Math.round((lo + hi) / 2 * 100) / 100; var prev = A.score.now();
-      if (insert([[id, t, '*', 0, 0, s]])) emit(prev, true);
+      if (ids[id]) return; var prev = A.score.now();
+      if (insert([[id, t, '*', actualPct, 2, 0]])) emit(prev, true);
     },
     /* score after every event, for the graph */
     series: function (maxPts) {
-      var T2 = {}, out = [], n = ev.length, step = Math.max(1, Math.ceil(n / (maxPts || 120)));
-      if (n) out.push([ev[0][1] - 1, scoreOf({}, ev[0][1]).pct]);
+      var T2 = fresh(), out = [], n = ev.length, step = Math.max(1, Math.ceil(n / (maxPts || 120)));
+      if (n) out.push([ev[0][1] - 1, scoreOf(fresh(), ev[0][1]).pct]);
       ev.forEach(function (e, i) { applyEv(T2, e); if (i % step === 0 || i === n - 1) out.push([e[1], scoreOf(T2, e[1]).pct]); });
       return out;
     },
-    at: function (t) { var T2 = {}; for (var i = 0; i < ev.length && ev[i][1] <= t; i++) applyEv(T2, ev[i]); return scoreOf(T2, t).pct; },
-    gains: function () {
-      var s = A.score.now(); return TOPS.map(function (k) { return { id: k, p: s.per[k], gain: A.SCORE_W[k] * Math.max(0, 0.95 - s.per[k]) * 100 / TOTW }; }).sort(function (a, b) { return b.gain - a.gain; });
+    at: function (t) { var T2 = fresh(); for (var i = 0; i < ev.length && ev[i][1] <= t; i++) applyEv(T2, ev[i]); return scoreOf(T2, t).pct; },
+    /* what 3 right answers at medium difficulty in each topic would add to the predicted score */
+    gains: function (n) {
+      n = n || 3; var now = Date.now(), base = scoreOf(T, now).pct, s = scoreOf(T, now);
+      return TOPS.map(function (k) {
+        var T2 = { all: T.all.slice(), top: {}, cal: T.cal }; Object.keys(T.top).forEach(function (q) { T2.top[q] = T.top[q]; }); T2.top[k] = (T.top[k] || []).slice();
+        for (var i = 0; i < n; i++) { var x = [now, C.DIFF[2], 1, 1]; T2.all.push(x); T2.top[k].push(x); }
+        return { id: k, p: s.per[k], gain: scoreOf(T2, now).pct - base, n: n };
+      }).sort(function (a, b) { return b.gain - a.gain; });
     },
-    count: function (k) { return T[k] && k !== '_g' ? T[k].n : 0; },
+    pm: function () { return A.score.now().pm; },
+    count: function (k) { return (T.top[k] || []).length; },
     flush: function () { return flush(); }
   };
 

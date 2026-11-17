@@ -56,6 +56,17 @@ const shots = path.join(dir, 'shots'); fs.mkdirSync(shots, { recursive: true });
       });
       log(left === 0, `${tag}: Clear misses empties the queue after two correct answers${left === 0 ? '' : ' (' + left + ' left)'}`);
     }
+    // quick check: runs one question per topic, shows a starting point, then leaves Today
+    if (info.F.score) {
+      const qc = await p.evaluate(async () => {
+        try { localStorage.removeItem(A.KEY('check')); } catch (e) {}
+        U.go('today'); if (!/quick check/i.test(document.querySelector('main').innerText)) return 'no card on Today';
+        U.go('check'); const n = Object.keys(A.SCORE_W).length;
+        for (let i = 0; i < n; i++) { const o = document.querySelector('.opt .optmain'); if (!o) return 'stuck at question ' + (i + 1); o.click(); const c = document.querySelector('.conf button'); if (c) c.click(); const b = Array.from(document.querySelectorAll('main .btn.block')).pop(); if (b) b.click(); }
+        if (!/starting point/i.test(document.querySelector('main').innerText)) return 'no summary'; U.go('today'); return /start the quick check/i.test(document.querySelector('main').innerText) ? 'card still on Today' : 'ok';
+      });
+      log(qc === 'ok', `${tag}: quick check runs and sets a starting point${qc === 'ok' ? '' : ' (' + qc + ')'}`);
+    }
     // a mini-mock start to finish
     if (info.F.minimocks) {
       await p.evaluate((u) => U.openSeq({ type: 'minimock', id: 'mm' + u, ch: u, title: 'Mini-mock' }), info.unit); await p.waitForTimeout(150);

@@ -58,7 +58,7 @@ U.views.exam = { tab: function (p) { return p && (p.kind === 'mock' || p.kind ==
       A.recordAnswer({ item: it, chosen: ch === undefined ? -1 : ch, conf: null, ms: (rec.t[i] || 0) * 1000, mode: 'mock', fresh: true, retake: wasRetake });
     });
     rec.submittedAt = Date.now();
-    if ((p.kind === 'mock' || p.kind === 'sample') && items.length >= 36 && !wasRetake) A.score.calibrate('cal:' + id + ':' + rec.submittedAt, rec.submittedAt, 100 * correct / items.length);
+    if ((p.kind === 'mock' || p.kind === 'sample') && items.length >= Math.max(10, Math.round(0.8 * (A.COURSE.format.questions || 35))) && !wasRetake) A.score.calibrate('cal:' + id + ':' + rec.submittedAt, rec.submittedAt, 100 * correct / items.length);
     rec.predBefore = predBefore; rec.predAfter = A.score.now().pct; rec.score = correct; rec.total = items.length; rec.perTopic = perTopic; rec.perCh = perCh; rec.timeUp = !!timeUp; rec.hist = (rec.hist || []).concat([{ at: rec.submittedAt, c: correct, n: items.length }]);
     A.store.mutate(function (s) {
       rec.updatedAt = Date.now(); s.mocks[id] = rec;

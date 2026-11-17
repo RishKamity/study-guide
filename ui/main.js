@@ -6,10 +6,10 @@
   TABS = TABS.filter(function (t) { return t[0] === 'mock' ? F.mocks : t[0] === 'listen' ? (F.audio && (A.AUDIO || []).length) : t[0] === 'ref' ? !!(A.REF_HTML || A.SHEET) : true; });
   U.views.endless = { tab: 'endless', hash: 'endless', render: function (m) { return U.views.session.render(m, { title: 'Endless practice' }); } };
   var chip = h('span', { class: 'chip-sync', title: 'Sync status' }), soundBtn, themeBtn;
-  var scoreChip = h('button', { class: 'chip-score', type: 'button', title: 'Predicted score: tap for details', 'aria-label': 'Predicted score', onclick: function () { U.go('today'); } }), scoreVal = h('b'), scoreDelta = h('span', { class: 'sd' });
-  scoreChip.appendChild(scoreVal); scoreChip.appendChild(scoreDelta);
+  var scoreChip = h('button', { class: 'chip-score', type: 'button', title: 'Predicted score: tap for details', 'aria-label': 'Predicted score', onclick: function () { U.go('today'); } }), scoreVal = h('b'), scorePm = h('small', { class: 'pm' }), scoreDelta = h('span', { class: 'sd' });
+  scoreChip.appendChild(scoreVal); scoreChip.appendChild(scorePm); scoreChip.appendChild(scoreDelta);
   function paintScore(cur, prev, live) {
-    var v = (cur || A.score.now()).pct; scoreVal.textContent = v.toFixed(2) + '%';
+    var sc0 = cur || A.score.now(), v = sc0.pct; scoreVal.textContent = v.toFixed(2) + '%'; scorePm.textContent = sc0.pm !== undefined ? '\u00B1' + sc0.pm.toFixed(1) : '';
     if (live && prev) { var d = v - prev.pct; if (Math.abs(d) >= 0.005) { scoreDelta.textContent = (d > 0 ? '\u25B2 +' : '\u25BC \u2212') + Math.abs(d).toFixed(2); scoreDelta.className = 'sd ' + (d > 0 ? 'up' : 'down'); U.scorePop(d); } }
   }
   U.scorePop = function (d) {

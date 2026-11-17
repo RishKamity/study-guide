@@ -53,7 +53,7 @@
     var facts = (C.facts || []).length ? h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Exam facts'), h('ul', { class: 'small muted', style: { margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' } }, C.facts.map(function (f) { return h('li', null, f); }))) : null;
     var oh = null; (C.officeHours || []).forEach(function (o) { if (!oh && now < Date.parse(o.end)) oh = h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Office hours'), h('p', { class: 'small' }, o.text), officeList(s)); });
     var daily = U.dailyCard ? U.dailyCard() : null;
-    main.appendChild(h('div', { class: 'stack' }, hero, planCard(s, now), daily, oh, go, predCard, missCard, h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Topic map'), heat, h('p', { class: 'small dim' }, 'Red is learning, amber is shaky, green is solid. Grey is untouched.')), facts));
+    main.appendChild(h('div', { class: 'stack' }, hero, planCard(s, now), U.checkCard ? U.checkCard() : null, daily, oh, go, predCard, missCard, h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Topic map'), heat, h('p', { class: 'small dim' }, 'Red is learning, amber is shaky, green is solid. Grey is untouched.')), facts));
     return function () { clearInterval(tm); };
   } };
 
@@ -102,14 +102,42 @@
     }
     var chRow = h('div', { class: 'chscores' }); A.UNITS.forEach(function (c) { if (sc.ch[c] === undefined) return; chRow.appendChild(h('div', null, h('small', null, A.unitShort(c)), h('b', null, sc.ch[c].toFixed(2) + '%'), h('i', { style: { width: Math.max(2, sc.ch[c]) + '%' } }))); });
     var gains = A.score.gains().slice(0, 3), gl = h('div', { class: 'stack', style: { gap: '6px' } });
-    gains.forEach(function (g) { var t = A.TOPIC[g.id]; gl.appendChild(h('button', { class: 'gainrow', type: 'button', onclick: function () { U.go('session', { title: t.title, topics: [g.id], noFilter: true }); } }, h('span', null, g.id + ' \u00B7 ' + t.title), h('b', null, 'up to +' + g.gain.toFixed(2) + '%'))); });
+    gains.forEach(function (g) { var t = A.TOPIC[g.id]; gl.appendChild(h('button', { class: 'gainrow', type: 'button', onclick: function () { U.go('session', { title: t.title, topics: [g.id], noFilter: true }); } }, h('span', null, g.id + ' \u00B7 ' + t.title), h('b', null, g.n + ' right \u2248 +' + g.gain.toFixed(2) + '%'))); });
+    var mt = A.TOPICS.filter(function (t) { return t.exam && A.SCORE_W[t.id]; }), mDone = 0, mBars = h('div', { class: 'mbars' });
+    mt.forEach(function (t) { var m = A.topicMastery(t.id), full = m.total && m.done === m.total; if (full) mDone++; mBars.appendChild(h('button', { class: 'mbar' + (full ? ' full' : ''), type: 'button', title: t.title + ': ' + m.done + ' of ' + m.total + ' question types mastered', onclick: function () { U.go('session', { title: t.title, topics: [t.id], noFilter: true }); } }, h('small', null, t.id), h('i', null, h('u', { style: { width: (m.total ? 100 * m.done / m.total : 0) + '%' } })))); });
     return h('div', { class: 'card stack scorecard' },
       h('div', { class: 'row', style: { justifyContent: 'space-between', alignItems: 'baseline' } }, h('div', { class: 'eyebrow' }, 'Predicted score'), Math.abs(dToday) >= 0.005 ? h('span', { class: 'sd ' + (dToday > 0 ? 'up' : 'down') }, (dToday > 0 ? '\u25B2 +' : '\u25BC \u2212') + Math.abs(dToday).toFixed(2) + ' today') : null),
-      h('div', { class: 'big scorebig' }, sc.pct.toFixed(2), h('span', null, '%')),
+      h('div', { class: 'big scorebig' }, sc.pct.toFixed(2), h('span', null, '%'), h('small', { class: 'pm' }, '\u00B1' + pred.pm.toFixed(1))),
       svg, chRow,
-      h('p', { class: 'muted small' }, 'Rough range ' + pred.lo.toFixed(0) + '\u2013' + pred.hi.toFixed(0) + '%. Hard questions right move it most. Easy ones barely move it, and misses pull it down. Full mocks recalibrate it.'),
-      h('div', { class: 'eyebrow' }, 'Biggest gains available'), gl);
+      h('p', { class: 'muted small' }, 'Your recent hit rate in each topic, weighted by how many exam questions it carries. The \u00B1 shrinks as you answer more. Hard questions right count a bit more; misses pull a topic down. A full mock or the sample exam counts for 40%.'),
+      h('div', { class: 'eyebrow' }, 'Biggest gain next'), gl,
+      h('div', { class: 'row', style: { justifyContent: 'space-between', alignItems: 'baseline' } }, h('div', { class: 'eyebrow' }, 'Mastery (2 right in a row per question type)'), h('b', { class: 'small' }, mDone + ' of ' + mt.length + ' topics')), mBars);
   };
+  /* quick check: one question per exam topic sets the starting point (answers count 1.5x, like any other answer otherwise) */
+  U.checkDone = function () { try { return localStorage.getItem(A.KEY('check')) === '1'; } catch (e) { return false; } };
+  U.checkCard = function () {
+    if (!A.FEAT.score || U.checkDone()) return null; var n = A.TOPICS.filter(function (t) { return t.exam && A.SCORE_W[t.id]; }).length;
+    return h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Quick check'), h('div', { class: 'h3' }, n + ' questions, one per topic'), h('p', { class: 'muted small' }, 'About ' + Math.round(n * 1.8) + ' minutes. It sets your starting point so the predicted score reflects what you already know. Answers count toward your score like any other practice.'), h('button', { class: 'btn', onclick: function () { U.go('check'); } }, 'Start the quick check'));
+  };
+  U.views.check = { tab: 'today', render: function (main) {
+    var tops = A.TOPICS.filter(function (t) { return t.exam && A.SCORE_W[t.id]; }), rng = A.mulberry32(Date.now() % 1e9), seen = {}, i = 0, right = 0;
+    var head = h('div', { class: 'stack' }, h('div', { class: 'eyebrow' }, 'Quick check'), h('h1', { class: 'h2' }, 'Where you are starting')), area = h('div');
+    main.appendChild(h('div', { class: 'stack' }, head, area));
+    function next() {
+      U.clear(area); window.scrollTo(0, 0);
+      if (i >= tops.length) {
+        try { localStorage.setItem(A.KEY('check'), '1'); } catch (e) {}
+        var sc = A.score.now();
+        area.appendChild(h('div', { class: 'card stack' }, h('div', { class: 'h2' }, right + ' of ' + tops.length + ' right'), h('p', null, 'Starting point: ', h('b', null, sc.pct.toFixed(2) + '% \u00B1' + sc.pm.toFixed(1))), h('p', { class: 'muted small' }, 'From here, Endless and the drills move it. Topics you missed are where the biggest gains are.'), h('button', { class: 'btn block', onclick: function () { U.go('today'); } }, 'Back to Today')));
+        return;
+      }
+      var t = tops[i], sk = A.topicSkillIds(t.id), gens = sk.filter(function (k) { return A.skills[k].kind === 'gen'; }), pool = gens.length && rng() < 0.7 ? gens : sk, pick = pool[Math.floor(rng() * pool.length)];
+      var it = A.freshItem(pick || sk[0], rng, seen); seen[it.id] = 1;
+      var q = U.question(it, { label: (i + 1) + ' / ' + tops.length, mode: 'check', onAnswer: function (r) { if (r.correct) right++; }, onNext: function () { i++; next(); }, nextLabel: i + 1 < tops.length ? 'Next question' : 'See my starting point' });
+      area.appendChild(h('div', { class: 'card' }, q)); U.keyFn = function (e) { q.keys(e); };
+    }
+    next(); return function () { U.keyFn = null; };
+  } };
   A.MOCK_N = A.TOPICS.reduce(function (n, t) { return n + (A.UNITS.indexOf(t.ch) >= 0 ? (t.exam || 0) : 0); }, 0);
   var SAMPLE_T = (A.COURSE.sample && A.COURSE.sample.title) || 'Sample exam';
   function pinList(s) {

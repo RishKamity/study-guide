@@ -7,9 +7,10 @@
    replaying them, so merging two devices is a plain union and any model change re-scores the same history. */
 (function () {
   var C = A.SCORE = { E: 1325, DIFF: { 1: 1150, 2: 1300, 3: 1450 }, SAMPLE_D: 1350, TF_D: 1150,
-    PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28,
+    PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28, CHECK_W: 1.7,
     GRACE: 24 * 3600e3, DECAY_DAY: 0.9, DECAY_MIN: 0.6, FLOOR: 1 / (A.COURSE.format.options || 4), CEIL: 0.995, MAX_EV: 15000, LSK: A.KEY('score') };
   var TOPS = Object.keys(A.SCORE_W), TOTW = TOPS.reduce(function (s, k) { return s + A.SCORE_W[k]; }, 0) || 1;
+  C.CHECK_W = Math.max(1.3, 1.7 + 0.07 * (14 - TOPS.length));   /* fewer topics = fewer check questions, so each counts more */
   /* kept for tests and simulations: chance a student of rating r gets an item of rating d right */
   function expct(r, d) { return 1 / (1 + Math.pow(10, (d - r) / 400)); }
   A.pCorrect = function (r, d) { return C.FLOOR + (1 - C.FLOOR) * expct(r, d === undefined ? C.E : d); };
@@ -44,7 +45,8 @@
     var chp = {}; Object.keys(ch).forEach(function (c) { if (ch[c][1]) chp[c] = 100 * ch[c][0] / ch[c][1]; });
     var pct = 100 * tot / TOTW; v += 0.5 * m * (1 - m) / (C.PRIOR_N + g.n * cov);
     var cal = T.cal.length ? T.cal[T.cal.length - 1] : null, pm = 100 * C.Z * Math.sqrt(v);
-    if (cal) { pct = (1 - C.MOCK_W) * pct + C.MOCK_W * cal[1]; pm *= (1 - C.MOCK_W); }
+    /* a mock can pull the score toward its result, but never past what practice alone can reach: skipping mocks never caps you */
+    if (cal) { pct = Math.min(100 * C.CEIL, (1 - C.MOCK_W) * pct + C.MOCK_W * Math.min(cal[1], 100 * C.CEIL)); pm *= (1 - C.MOCK_W); }
     return { pct: pct, ch: chp, per: per, pm: Math.max(0.5, pm), overall: m };
   }
   function cmp(a, b) { return a[1] - b[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0); }
@@ -80,7 +82,7 @@
     if (o.retake) w *= 0.25;
     if (o.conf === 2) w *= 0.5;
     if (o.conf === 0 && !o.correct) w *= 1.5;
-    if (o.mode === 'check') w *= 1.5;
+    if (o.mode === 'check') w *= C.CHECK_W;   /* a perfect quick check starts you near 90% */
     return w;
   }
   A.score = {

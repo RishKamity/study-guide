@@ -35,4 +35,8 @@ r = sim({ _: 1100, [TA]: 1500, [TB]: 1500 }, 800, { seed: 9 }); ok(Math.abs(r.pr
 { const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); const k = Object.keys(A.SCORE_W); const m0 = A.score.now(t).pm; for (let i = 0; i < 120; i++) { t += 30000; A.score.raw(['q' + i, t, k[i % k.length], 1300, i % 6 ? 1 : 0, 1]); } const m1 = A.score.now(t).pm; ok(m1 < m0 / 3, `margin ±${m0.toFixed(1)} -> ±${m1.toFixed(1)}`); }
 // old (v1) rating-shift calibration events are ignored
 { const A = loadA(); const t = Date.UTC(2026, 9, 27, 5); const p0 = A.score.now(t).pct; A.score.raw(['old', t, '*', 0, 0, 42.5]); ok(Math.abs(A.score.now(t).pct - p0) < 1e-9, 'v1 calibration events ignored'); }
+// a perfect quick check (one answer per topic at check weight) starts near 90%
+{ const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); Object.keys(A.SCORE_W).forEach((k, i) => { t += 30000; A.score.raw(['c' + i, t, k, 1300, 1, A.SCORE.CHECK_W]); }); const p = A.score.now(t).pct; ok(p > 87 && p < 93, `perfect quick check starts at ${p.toFixed(2)}%`); }
+// skipping mocks never lowers the ceiling: a perfect mock cannot push past what perfect practice can reach
+{ const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); const k = Object.keys(A.SCORE_W); for (let i = 0; i < 3000; i++) { t += 10000; A.score.raw(['z' + i, t, k[i % k.length], 1450, 1, 1]); } const p0 = A.score.now(t).pct; A.score.calibrate('cal:z', t, 100); const p1 = A.score.now(t).pct; ok(p1 <= 100 * A.SCORE.CEIL + 1e-9 && p0 > 98.5, `max without a mock ${p0.toFixed(2)}%, with a perfect mock ${p1.toFixed(2)}% (cap ${(100 * A.SCORE.CEIL).toFixed(2)}%)`); }
 console.log(fails ? 'FAIL ' + fails : 'PASS');

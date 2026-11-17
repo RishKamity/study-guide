@@ -113,11 +113,11 @@
       h('div', { class: 'eyebrow' }, 'Biggest gain next'), gl,
       h('div', { class: 'row', style: { justifyContent: 'space-between', alignItems: 'baseline' } }, h('div', { class: 'eyebrow' }, 'Mastery (2 right in a row per question type)'), h('b', { class: 'small' }, mDone + ' of ' + mt.length + ' topics')), mBars);
   };
-  /* quick check: one question per exam topic sets the starting point (answers count 1.5x, like any other answer otherwise) */
+  /* quick check: one question per exam topic sets the starting point (answers count extra: A.SCORE.CHECK_W) */
   U.checkDone = function () { try { return localStorage.getItem(A.KEY('check')) === '1'; } catch (e) { return false; } };
   U.checkCard = function () {
     if (!A.FEAT.score || U.checkDone()) return null; var n = A.TOPICS.filter(function (t) { return t.exam && A.SCORE_W[t.id]; }).length;
-    return h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Quick check'), h('div', { class: 'h3' }, n + ' questions, one per topic'), h('p', { class: 'muted small' }, 'About ' + Math.round(n * 1.8) + ' minutes. It sets your starting point so the predicted score reflects what you already know. Answers count toward your score like any other practice.'), h('button', { class: 'btn', onclick: function () { U.go('check'); } }, 'Start the quick check'));
+    return h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Quick check'), h('div', { class: 'h3' }, n + ' questions, one per topic'), h('p', { class: 'muted small' }, 'About ' + Math.round(n * 1.8) + ' minutes. It sets your starting point so the predicted score reflects what you already know. Answers count a little extra (all right starts you near 90%).'), h('button', { class: 'btn', onclick: function () { U.go('check'); } }, 'Start the quick check'));
   };
   U.views.check = { tab: 'today', render: function (main) {
     var tops = A.TOPICS.filter(function (t) { return t.exam && A.SCORE_W[t.id]; }), rng = A.mulberry32(Date.now() % 1e9), seen = {}, i = 0, right = 0;

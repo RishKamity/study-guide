@@ -75,7 +75,7 @@ A.TOPICS = [
 |---|---|---|---|
 | stations (lessons) | | yes | yes |
 | mocks, mini-mocks, locked sample | | yes | yes |
-| Elo predicted score | | | yes |
+| predicted score (hit rate, ± margin, quick check) | | | yes |
 | drill extras (weak spots, misses, flashcards, twins, calc sprint, walk-in sheet, T/F) | | | yes |
 | audio, AI tutor, cross-device sync | | | yes |
 | daily puzzle | opt-in | opt-in | opt-in |

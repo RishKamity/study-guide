@@ -8,7 +8,7 @@ Give Claude your course folder (slides, notes, lecture transcripts, solutions, s
 - **Practice that never runs out**: number generators make fresh calculation questions; written banks cover concepts. Misses come back on a spaced schedule, and the same question never repeats within 15
 - **Mocks** on the exact exam blueprint, plus the instructor's **sample exam sealed** as a timed dress rehearsal
 - A **schedule that re-plans from now**. If you start late, it trims the least-tested topics instead of telling you that you're behind
-- **Full tier extras**: a live predicted score (Elo-style, two decimals, +/− after every answer), weak spots, flashcards, calc sprint, walk-in sheet, narrated audio, an AI tutor, phone ↔ laptop sync, and an optional daily puzzle with a push reminder
+- **Full tier extras**: a live predicted score from your hit rate per topic (two decimals, a ± margin, +/− after every answer, a quick check to set the start), weak spots, flashcards, calc sprint, walk-in sheet, narrated audio, an AI tutor, phone ↔ laptop sync, and an optional daily puzzle with a push reminder
 
 | Tier | Build time | What you get |
 |---|---|---|
@@ -25,7 +25,7 @@ Give Claude your course folder (slides, notes, lecture transcripts, solutions, s
 ## How it works
 
 ```
-engine/   adaptive picker, misses, Elo score, schedule, storage + sync   (never changes per course)
+engine/   adaptive picker, misses, hit-rate score, schedule, storage + sync   (never changes per course)
 ui/       the app screens
 styles/   one stylesheet, 8 accent palettes, light/dark
 tools/    build.mjs, validate.mjs (accuracy gate), smoke.cjs (click-through test), review_*.mjs, audio/
@@ -52,7 +52,7 @@ Node 18+. Playwright + Chromium for `smoke.cjs`. For audio: Python 3, ffmpeg, an
 ## Tests (engine development)
 
 ```
-COURSE=courses/demo node tests/score_sim.mjs        # Elo model converges, resists farming, decays, calibrates
+COURSE=courses/demo node tests/score_sim.mjs        # score tracks hit rate, resists farming, decays gently, margin shrinks, mocks blend in
 COURSE=courses/demo node tests/schedule_plan.mjs    # re-plan + trimming + dress rehearsal protected
 COURSE=courses/demo node tests/palettes.mjs         # every accent passes WCAG AA in both themes
 ```

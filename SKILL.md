@@ -29,7 +29,7 @@ Ask these in one round (use AskUserQuestion when available; each has a sensible 
 | Which exam, and its date, time, room and format (number of questions, choices per question, minutes, calculator/notes rules)? | Read from the syllabus/exam info files; confirm in the plan |
 | Hours available and when they start studying (now? tomorrow 9 AM?) | Study windows 9:00-12:30, 13:30-17:30, 18:30-23:00 from now. Turn "about N hours total" into `schedule.hoursPerDay` = N / days left, and a later start into `schedule.start` |
 | Confidence or last exam grade | Medium; include a boot camp only if a prerequisite gap is obvious |
-| Tier: **Quick** (~30-45 min build: question bank + cheat sheet + practice), **Standard** (+ lessons, mocks, sealed sample exam), **Full** (+ Elo predicted score, drills, narrated audio, AI tutor, sync, independent review; several hours) | Standard |
+| Tier: **Quick** (~30-45 min build: question bank + cheat sheet + practice), **Standard** (+ lessons, mocks, sealed sample exam), **Full** (+ predicted score from your hit rate with a ± margin and a quick check, drills, narrated audio, AI tutor, sync, independent review; several hours) | Standard |
 | Full only: accent color (lavender, teal, sky, green, amber, coral, orange, slate) | lavender |
 | Daily puzzle with a push reminder each day until the exam? | No |
 
@@ -124,4 +124,5 @@ Tell the student in 3-6 lines: what the guide has (tier, number of topics, quest
 - **Answers you cannot verify in code get checked by hand against the official solution**, and disagreements go in `CONFLICTS.md` with your reasoning.
 - **Look at the screenshots.** A layout bug hid every bottom button under the tab bar on phones; tests that only read text did not catch it.
 - **Clear misses never cleared** (CS 159 build): the misses session did not tell the question it was in misses mode, so six right answers in a row left the miss in the queue. `smoke.cjs` now checks that two right answers empty the queue; keep that check when changing the session or the misses rules.
+- **The predicted score used to need hundreds of answers** (an Elo rating that never settled; a perfect run of 500 read under 94%). It now comes from each topic's recent hit rate, pulled toward the overall rate as far as the exam is covered, with a ± margin; a one-question-per-topic quick check (all right ≈ 90%) sets the start, and the latest full mock blends in at 40% but can never raise the 99.5% cap, so mocks are never required. `tests/score_sim.mjs` guards all of this.
 - **Start the audio render early.** It is the slowest step and runs fine in the background.

@@ -10,7 +10,7 @@
     PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28, CHECK_W: 1.7,
     GRACE: 24 * 3600e3, DECAY_DAY: 0.9, DECAY_MIN: 0.6, FLOOR: 1 / (A.COURSE.format.options || 4), CEIL: 0.995, MAX_EV: 15000, LSK: A.KEY('score') };
   var TOPS = Object.keys(A.SCORE_W), TOTW = TOPS.reduce(function (s, k) { return s + A.SCORE_W[k]; }, 0) || 1;
-  C.CHECK_W = Math.max(1.3, 1.7 + 0.07 * (14 - TOPS.length));   /* fewer topics = fewer check questions, so each counts more */
+  C.CHECK_W = Math.max(1.55, 1.7 + 0.07 * (14 - TOPS.length));   /* fewer topics = fewer check questions, so each counts more; floored so a 25-topic check still starts near 90% */
   /* kept for tests and simulations: chance a student of rating r gets an item of rating d right */
   function expct(r, d) { return 1 / (1 + Math.pow(10, (d - r) / 400)); }
   A.pCorrect = function (r, d) { return C.FLOOR + (1 - C.FLOOR) * expct(r, d === undefined ? C.E : d); };

@@ -26,7 +26,13 @@ A.topicStat = function (tid, st) {
   });
   if (!n) return { n: 0, p: null, state: 'new', mastered: false };
   var p = num / den, state = p < 0.6 ? 'learning' : (p < 0.85 ? 'shaky' : 'solid');
-  var mm = A.topicMastery(tid, st), mastered = mm.total > 0 && mm.done === mm.total;
+  var mastered = false, MS = A.COURSE.mastery && A.COURSE.mastery.streak;
+  if (MS) {
+    /* course option: mastered = the last N first-try answers on this topic were all correct */
+    var all = []; ids.forEach(function (sid) { var s2 = st.skills[sid]; if (s2) s2.a.forEach(function (x) { all.push(x); }); });
+    all.sort(function (a, b) { return b[1] - a[1]; });
+    mastered = all.length >= MS && all.slice(0, MS).every(function (x) { return x[2] === 1; });
+  } else { var mm = A.topicMastery(tid, st); mastered = mm.total > 0 && mm.done === mm.total; }
   if (mastered) state = 'mastered';
   return { n: n, p: p, state: state, mastered: mastered };
 };
@@ -61,9 +67,13 @@ A.recordAnswer = function (o) {
     // misses scheduling
     var m = st.misses[sid], STAGES = [3, 8, 20];
     if (!correct) {
-      st.misses[sid] = { skill: sid, at: now, n: st.count, stage: 0, due: st.count + STAGES[0], streak: 0, soft: false, done: false, sure: conf === 0 };
+      /* queue of missed bank questions in this skill (newest last, max 5) so each can come back reworded */
+      var q0 = (m && !m.done) ? (m.queue || (m.item ? [m.item] : [])) : [];
+      var queue = q0.filter(function (x) { return A.baseId(x) !== A.baseId(item.id); }).concat([item.id]).slice(-5);
+      st.misses[sid] = { skill: sid, at: now, n: st.count, stage: 0, due: st.count + STAGES[0], streak: 0, soft: false, done: false, sure: conf === 0, item: item.id, queue: queue };
       if (conf === 0) { res.autoWhy = true; st.pins[item.id] = { skill: sid, at: now }; }
     } else if (m && !m.done) {
+      if (m.queue && m.queue.length) m.queue = m.queue.filter(function (x) { return A.baseId(x) !== A.baseId(item.id); });
       if (st.count >= m.due || o.mode === 'misses') {
         m.streak = (m.streak || 0) + 1; m.stage = Math.min((m.stage || 0) + 1, 2); m.at = now;
         if (m.streak >= (m.soft ? 1 : 2)) { m.done = true; } else m.due = st.count + STAGES[m.stage];
@@ -122,13 +132,30 @@ A.pickSkill = function (opts) {
 A.COOLDOWN = 15; A.recent = [];
 A.baseId = function (id) { var m = /^b:([^:]+):(\d+)/.exec(id); return m ? 'b:' + m[1] + ':' + m[2] : id; };
 A.noteSeen = function (it) { if (!it || !it.id) return; var b = A.baseId(it.id); A.recent = A.recent.filter(function (x) { return x !== b; }); A.recent.push(b); if (A.recent.length > A.COOLDOWN) A.recent.shift(); };
+/* {idx, avoid} when skill sid has a due miss whose question has rewordings, else null */
+A.rewordMiss = function (sid, opts) {
+  var st = A.store.state, m = st.misses[sid];
+  if (!m || m.done) return null;
+  if (!(opts && opts.onlyMisses) && st.count < m.due) return null;
+  var q = m.queue || (m.item ? [m.item] : []);
+  for (var i = 0; i < q.length; i++) {
+    if (String(q[i]).indexOf('b:') !== 0) continue;
+    var p = A.parseId(q[i]), s = (A.banks[p.topic] || [])[p.idx];
+    if (s && A.wordings(s).length > 1) return { idx: p.idx, avoid: A.wordingOf(q[i]) };
+  }
+  return null;
+};
 A.nextItem = function (opts) {
   var rr = A.mulberry32(Math.floor(Math.random() * 4294967296)), best = null;
   opts.rng = rr;
   for (var tries = 0; tries < 10; tries++) {
     var sid = A.pickSkill(opts); if (!sid) return null;
     var seen = Object.assign({}, A.store.state.seen); A.recent.forEach(function (b, i) { seen[b] = (seen[b] || 0) + 1000 * (i + 1); });
-    var it = A.freshItem(sid, rr, seen, opts); if (!it) continue;
+    /* a due miss on a reworded bank question comes back as the same idea in a different wording (cooldown skipped on purpose) */
+    var rw = A.rewordMiss(sid, opts);
+    if (rw && opts.concept && A.conceptIdx(A.skills[sid].topic).indexOf(rw.idx) < 0) rw = null;
+    if (rw) { var ri = A.freshItem(sid, rr, seen, rw); if (ri) { best = ri; break; } }
+    var it = A.freshItem(sid, rr, seen, null, opts); if (!it) continue;
     if (A.recent.indexOf(A.baseId(it.id)) < 0) { best = it; break; }
     if (!best) best = it;
     opts.lastSkill = sid;

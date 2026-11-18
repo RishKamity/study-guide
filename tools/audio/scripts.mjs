@@ -28,7 +28,7 @@ A.TOPICS.filter(t => t.ch === 0 && S[t.id]).forEach(t => tracks.push({ id: t.id,
 A.UNITS.forEach(u => A.TOPICS.filter(t => t.ch === u && t.exam && S[t.id]).forEach(t => tracks.push({ id: t.id, title: t.title, group: A.CHAPTERS[u], raw: stationScript(t.id) })));
 const SH = A.SHEET;
 if (SH && ((SH.FORMULAS || []).length || (SH.TRAPS || []).length)) tracks.push({ id: 'WALK', title: 'Walk-in sheet', group: 'Review', raw: ['This is the walk-in sheet, read aloud. Listen on the way to the exam.']
-  .concat((SH.FORMULAS || []).length ? ['Formulas.'] : [], (SH.FORMULAS || []).map(f => end(f[0] + '. ' + f[1])), (SH.JES || []).length ? [(SH.JES_TITLE || 'Journal entry templates') + '.'] : [], (SH.JES || []).map(j => end(j[0] + '. ' + j[1])),
+  .concat((SH.FORMULAS || []).length ? [(SH.FORMULAS_TITLE || 'Formulas') + '.'] : [], (SH.FORMULAS || []).map(f => end(f[0] + '. ' + f[1])), (SH.JES || []).length ? [(SH.JES_TITLE || 'Journal entry templates') + '.'] : [], (SH.JES || []).map(j => SH.JES_HEAD ? end(SH.JES_HEAD[0] + ': ' + j[0] + '. ' + SH.JES_HEAD[1] + ': ' + j[1]) : end(j[0] + '. ' + j[1])),
     (SH.TRAPS || []).length ? ['The traps.'] : [], (SH.TRAPS || []).map((t, i) => 'Number ' + (i + 1) + '. ' + end(t)), ['That is the sheet. Breathe. Read each question twice.']) });
 let tot = 0; tracks.forEach(t => { t.words = wc(t.raw.join(' ')); tot += t.words; });
 fs.mkdirSync(path.join(dir, 'audio'), { recursive: true });

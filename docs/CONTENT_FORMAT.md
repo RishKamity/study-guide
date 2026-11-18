@@ -56,7 +56,11 @@ A.COURSE = {
   tutor: { context: 'You are a tutor for ...', conventions: 'course-specific rules the AI must follow' },
   walkIn: { title: '... walk-in sheet', travel: 'Play the walk-in sheet track on the way to ...' },
   officeHours: [{ end: '2026-12-09T15:00:00-05:00', text: 'Office hours Wed 1-3 PM, ...' }],
-  schedule: { windows: [['09:00', '12:30'], ['13:30', '17:30'], ['18:30', '23:00']], stopBeforeExam: 45, pace: 1.25 }
+  schedule: { windows: [['09:00', '12:30'], ['13:30', '17:30'], ['18:30', '23:00']], stopBeforeExam: 45, pace: 1.25,
+              hoursPerDay: 2, hoursByDate: { '2026-12-08': 4 } },   // optional daily cap, with per-date overrides (local dates)
+  mastery: { streak: 2 },            // optional: a topic is mastered when its last N first-try answers were all correct
+  quickStart: { minutes: 5, title: '5-minute drill', blurb: '...' },   // optional: one-tap timed drill as the first card on Today
+  notes: [{ from: ISO, to: ISO, title: 'Night-before plan', items: ['...'] }]   // optional: cards shown on Today inside a time window
 };
 A.TOPICS = [
   // id: short and stable ('9A'); ch: unit id (0 = boot camp); exam: integer questions on the exam (mock blueprint);
@@ -130,6 +134,22 @@ A.defBank('1A', [
 - Each wrong answer encodes a real mistake, and its reason says why it is tempting and why it is wrong.
 - `general: true` marks content written from standard textbook knowledge because the course files barely cover it; the app shows "Not from your course files".
 - **Concepts only drill.** A bank question counts as a concept question (answerable in your head, no pen) when it has no code block, table, entry or `calc`, and no number-operator-number in its stem or options. Force it with `concept: true` or `concept: false`; generators opt in with `concept: true` on the skill. The Drill tab shows the card once there are 10+ concept questions.
+
+### Rewording (`alts`)
+
+Concept questions repeat (generators don't exist for them), so give every bank question 2-3 other wordings of the same fact. The student then learns the idea instead of recognizing a sentence.
+
+```js
+B('What does the law of demand say?', 'When the price rises, quantity demanded falls, other things equal.', [3 wrong], [3 reasons], 'rule', { alts: [
+  'A store raises its sandwich price and sells fewer, nothing else changing. Which idea does this show?',   // string: new stem, same answer + wrong options
+  { q: 'Which statement is the law of demand?', a: 'Other things equal, a higher price means a lower quantity demanded.',
+    w: [3 wrong], why: [3 reasons] },                                                                       // object: overrides any of q, a, w, why, rule, table, work
+] }),
+```
+- Wording 0 is the question itself; wording k is `alts[k-1]` merged over it. Item ids stay `b:<topic>:<idx>:<variant>`, and the variant picks the wording (`variant % wordings`) and the option order, so adding alts later keeps every student's progress.
+- Each repeat of a question shows its least-seen wording. A **missed** question comes back (on the misses schedule) as the same idea in a **different wording from the one missed**; answering that right clears it.
+- Mix angles: plain stem, a short scenario, and the reverse (term -> definition, as an object alt with its own options). Synonym swaps don't count.
+- Validate checks every wording like a normal question (4 distinct options, key, rule, 3 reasons) and warns when more than 20% of a concept-only topic's questions have fewer than 2 alts.
 
 ## Stations (`A.STATIONS[id]`)
 

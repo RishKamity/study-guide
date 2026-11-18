@@ -4,7 +4,7 @@ export const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname)
 export const ENGINE_PRE = ['engine/rng.js', 'engine/items.js'];
 export const ENGINE_MID = ['engine/course.js', 'engine/store.js'];
 export const ENGINE_POST = ['engine/adaptive.js', 'engine/schedule.js', 'engine/score.js'];
-export const UI = ['ui/core.js', 'ui/visuals.js', 'ui/question.js', 'ui/station.js', 'ui/exam.js', 'ui/session.js', 'ui/views.js', 'ui/drill2.js', 'ui/ai.js', 'ui/listen.js', 'ui/daily.js', 'ui/main.js'];
+export const UI = ['ui/core.js', 'ui/visuals.js', 'ui/question.js', 'ui/station.js', 'ui/exam.js', 'ui/session.js', 'ui/views.js', 'ui/drill2.js', 'ui/ai.js', 'ui/listen.js', 'ui/daily.js', 'ui/stats.js', 'ui/main.js'];
 export function pack(courseDir) {
   const dir = path.resolve(courseDir); const P = JSON.parse(fs.readFileSync(path.join(dir, 'pack.json'), 'utf8'));
   const abs = f => path.join(dir, f);

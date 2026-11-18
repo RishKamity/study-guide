@@ -85,6 +85,7 @@
     A.TOPICS.filter(function (t) { return A.topicSkillIds(t.id).length; }).forEach(function (t) { sel.appendChild(h('option', { value: t.id }, topicTitle(t.id))); });
     var dueCards = A.cardQueue(s).length;
     main.appendChild(h('div', { class: 'stack' }, h('h1', { class: 'h1' }, 'Drill'),
+      U.conceptCard ? U.conceptCard() : null,
       h('div', { class: 'card stack' }, h('div', { class: 'h3' }, 'Topic drill'), h('p', { class: 'muted small' }, 'Questions on one topic only, with instant feedback.'), sel, h('button', { class: 'btn', onclick: function () { U.go('session', { title: topicTitle(sel.value), topics: [sel.value], noFilter: true }); } }, 'Start drill')),
       F.drills ? h('div', { class: 'card stack' }, h('div', { class: 'h3' }, 'Misses'), h('p', { class: 'muted small' }, act ? act + ' in the queue, ' + due + ' due now. They leave after two correct answers in a row.' : 'Nothing in the queue.'), h('button', { class: 'btn', disabled: act ? null : true, onclick: function () { U.go('session', { title: 'Clear your Misses', onlyMisses: true }); } }, 'Clear misses')) : null,
       F.drills && (A.FLASHCARDS || []).length ? h('div', { class: 'card stack' }, h('div', { class: 'h3' }, 'Flashcards'), h('p', { class: 'muted small' }, dueCards + ' cards ready. Flip, then mark whether you knew it.'), h('button', { class: 'btn', onclick: function () { U.go('cards', {}); } }, 'Open flashcards')) : null,

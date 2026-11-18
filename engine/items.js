@@ -109,12 +109,13 @@ A.bankItem = function (topic, idx, s0, variant) {
 };
 /* concept questions: answerable in your head, no code to trace, no arithmetic. A bank item can force it either way
    with concept: true / false; otherwise it counts as a concept question when it has no code block, table, entry,
-   calc flag, and no number-operator-number in the stem or options. Generators opt in with concept: true. */
+   calc flag, no number-operator-number or scientific notation, and fewer than three numbers in the stem. Generators opt in with concept: true. */
 A.isConceptSpec = function (s) {
   if (s.concept === true || s.concept === false) return s.concept;
   if (s.calc || s.table || s.je || /```/.test(s.q)) return false;
   var txt = [s.q, s.a].concat(s.w || []).join(' \n ');
-  return !/\d\s*[-+*\/%]\s*\d|\d\s*(==|!=|<=|>=|<|>)\s*\d/.test(txt);
+  if (/\d\s*[-+*\/%\u00d7\u00f7]\s*\d|\d\s*(==|!=|<=|>=|<|>)\s*\d|10[\u207b\u2070-\u2079\u00b9\u00b2\u00b3]+/.test(txt)) return false;
+  return ((s.q || '').match(/\d+(\.\d+)?/g) || []).length < 3;   /* three or more numbers in the stem: likely a calculation */
 };
 A.conceptIdx = function (topic) {
   A._cIdx = A._cIdx || {}; if (A._cIdx[topic]) return A._cIdx[topic];

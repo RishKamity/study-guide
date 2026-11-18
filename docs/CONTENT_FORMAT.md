@@ -150,6 +150,7 @@ B('What does the law of demand say?', 'When the price rises, quantity demanded f
 - Each repeat of a question shows its least-seen wording. A **missed** question comes back (on the misses schedule) as the same idea in a **different wording from the one missed**; answering that right clears it.
 - Mix angles: plain stem, a short scenario, and the reverse (term -> definition, as an object alt with its own options). Synonym swaps don't count.
 - Validate checks every wording like a normal question (4 distinct options, key, rule, 3 reasons) and warns when more than 20% of a concept-only topic's questions have fewer than 2 alts.
+- A wording with `tf: true` is a plain true/false question: `a` is `'True'` or `'False'`, `w` is the other one, `why` has one reason. It shows as two options, always True then False, the way the real exam shows true/false. Use it for one-word-swap sentences instead of four "False: the book says X" options.
 
 ## Stations (`A.STATIONS[id]`)
 

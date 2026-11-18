@@ -71,11 +71,13 @@ for (const t of Object.keys(A.banks)) A.banks[t].forEach((s, i) => {
   /* every wording, each in a few option orders (variant v shows wording v % nW) */
   for (let v = 0; v < Math.max(3, nW * 2); v++) { bN++; const w = ws[v % nW], tag = t + '#' + i + (v % nW ? ' alt ' + (v % nW) : '');
     try { const it = A.makeItem('b:' + t + ':' + i + ':' + v);
-      if (it.options.length !== 4 || new Set(it.options).size !== 4) throw new Error('needs 4 distinct options');
+      const nO = w.tf ? 2 : 4;   /* tf: true wordings are plain True/False */
+      if (w.tf && !(w.a === 'True' || w.a === 'False') || w.tf && (w.w || [])[0] !== (w.a === 'True' ? 'False' : 'True')) throw new Error('tf wording needs answer True/False and the other as its one wrong option');
+      if (it.options.length !== nO || new Set(it.options).size !== nO) throw new Error('needs ' + nO + ' distinct options');
       if (it.options[it.answer] !== w.a) throw new Error('answer text not at the key');
       if (it.stem !== w.q) throw new Error('wrong wording shown for this variant');
-      if (!w.rule) throw new Error('missing rule'); if ((w.w || []).length !== 3) throw new Error('needs exactly 3 wrong options');
-      if ((w.why || []).length !== 3) throw new Error('needs 3 reasons (one per wrong option)');
+      if (!w.rule) throw new Error('missing rule'); if ((w.w || []).length !== nO - 1) throw new Error('needs exactly ' + (nO - 1) + ' wrong option(s)');
+      if ((w.why || []).length !== nO - 1) throw new Error('needs ' + (nO - 1) + ' reason(s) (one per wrong option)');
     } catch (e) { bBad++; if (v < nW) FAIL(`bank ${tag}: ${e.message}`); } }
   if (!s.calc && nW < 3) (altFew[t] = altFew[t] || []).push(i);
 });

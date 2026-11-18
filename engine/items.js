@@ -98,9 +98,10 @@ A.bankItem = function (topic, idx, s0, variant) {
   var rng = A.mulberry32(A.hash('b' + topic + idx + ':' + (variant || 0)));
   var opts = [{ t: s.a, ok: true, why: null }];
   s.w.forEach(function (w, i) { opts.push({ t: w, ok: false, why: (s.why && s.why[i]) || null }); });
-  if (!s.fixed) opts = rng.shuffle(opts);
+  if (s.tf) opts.sort(function (x, y) { return (y.t === 'True') - (x.t === 'True'); });   /* true/false wording: always True, False */
+  else if (!s.fixed) opts = rng.shuffle(opts);
   return {
-    id: null, topic: topic, skill: topic + '.bank', format: 'mc4', stem: s.q, table: s.table || null,
+    id: null, topic: topic, skill: topic + '.bank', format: s.tf ? 'tf' : 'mc4', stem: s.q, table: s.table || null,
     options: opts.map(function (o) { return o.t; }), answer: opts.findIndex(function (o) { return o.ok; }),
     rule: s.rule || '', work: s.work || '', why: opts.map(function (o) { return o.why; }), je: s.je || null,
     difficulty: s.diff || 1, calc: !!s.calc, general: !!s.general, seconds: s.seconds || (s.calc ? 75 : 40), num: null, src: s.src || null, twin: s.twin || null,

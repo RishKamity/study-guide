@@ -67,6 +67,17 @@ const shots = path.join(dir, 'shots'); fs.mkdirSync(shots, { recursive: true });
       });
       log(qc === 'ok', `${tag}: quick check runs and sets a starting point${qc === 'ok' ? '' : ' (' + qc + ')'}`);
     }
+    // Concepts only: a short run never shows a code block or a calculation
+    const hasConcept = await p.evaluate(() => A.conceptCount && A.conceptCount() >= 10);
+    if (hasConcept) {
+      const cc = await p.evaluate(() => {
+        U.go('drill'); if (!/concepts only/i.test(document.querySelector('main').innerText)) return 'no card on Drill';
+        U.go('session', { concept: true, title: 'Concepts only' });
+        for (let k = 0; k < 8; k++) { const stem = document.querySelector('main .stem'); if (!stem) return 'no question at ' + (k + 1); if (document.querySelector('main pre.code') || document.querySelector('main .dtable')) return 'code or table shown at question ' + (k + 1);
+          const o = document.querySelector('.opt .optmain'); o.click(); const c = document.querySelector('.conf button'); if (c) c.click(); const nx = Array.from(document.querySelectorAll('main .btn.block')).find(b => /next/i.test(b.textContent)); if (!nx) return 'stuck at ' + (k + 1); nx.click(); }
+        return 'ok'; });
+      log(cc === 'ok', `${tag}: Concepts only shows questions with no code or tables${cc === 'ok' ? '' : ' (' + cc + ')'}`);
+    }
     // a mini-mock start to finish
     if (info.F.minimocks) {
       await p.evaluate((u) => U.openSeq({ type: 'minimock', id: 'mm' + u, ch: u, title: 'Mini-mock' }), info.unit); await p.waitForTimeout(150);

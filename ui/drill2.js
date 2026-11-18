@@ -11,6 +11,7 @@
     var s = A.store.state, weakN = A.weakRank(s).filter(function (x) { return x.n > 0; }).length;
     function card(title, sub, view, label, params) { return h('div', { class: 'card stack' }, h('div', { class: 'h3' }, title), h('p', { class: 'muted small' }, sub), h('button', { class: 'btn', onclick: function () { U.go(view, params || {}); } }, label)); }
     return h('div', { class: 'stack' },
+      A.conceptCount() >= 10 ? card('Concepts only', 'Rules, definitions and traps you can answer in your head. No code to trace, no math, no pen needed.', 'session', 'Start concepts', { concept: true, title: 'Concepts only' }) : null,
       card('Weak spots', weakN ? 'Your lowest topics, ranked by how many exam points they cost you.' : 'Ranks your topics once you have answered some questions.', 'weak', 'See my weak spots'),
       (A.TWINS || []).length ? card('Twins', 'Look-alike concepts side by side, then a quick test on which is which.', 'twins', 'Open Twins') : null,
       A.HAS_CALC() ? card('Calc sprint', 'Type the number. Timed, calculator in hand.', 'calc', 'Start sprint') : null,

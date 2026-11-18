@@ -98,8 +98,9 @@ A.pickSkill = function (opts) {
   var topics = opts.topics && opts.topics.length ? opts.topics : A.poolTopics(st, opts.includeNew).map(function (t) { return t.id; });
   if (opts.chapter) topics = topics.filter(function (id) { return A.TOPIC[id].ch === opts.chapter; });
   var allowed = {}; topics.forEach(function (id) { allowed[id] = 1; });
-  var skills = Object.keys(A.skills).filter(function (k) { return allowed[A.skills[k].topic]; });
+  var skills = Object.keys(A.skills).filter(function (k) { return allowed[A.skills[k].topic] && (!opts.concept || A.isConceptSkill(k)); });
   if (!skills.length) return null;
+  if (opts.concept) { var okS = {}; skills.forEach(function (k) { okS[k] = 1; }); allowed = {}; skills.forEach(function (k) { allowed[A.skills[k].topic] = 1; }); }
   function weightOf(sid) {
     var sk = A.skills[sid], t = A.TOPIC[sk.topic]; var ts = A.topicStat(t.id, st); var p = ts.p === null ? 0.25 : ts.p;
     var sp = A.skillP(sid, st); var skp = sp === null ? 0.25 : sp;
@@ -108,7 +109,7 @@ A.pickSkill = function (opts) {
   }
   function wpick(list) { var tot = 0, ws = list.map(function (s) { var w = weightOf(s); tot += w; return w; }); var x = rng() * tot; for (var i = 0; i < list.length; i++) { x -= ws[i]; if (x <= 0) return list[i]; } return list[list.length - 1]; }
   var noRepeat = function (list) { var f = list.filter(function (s) { return s !== opts.lastSkill; }); return f.length ? f : list; };
-  var due = A.dueMisses(st).filter(function (m) { return allowed[A.skills[m.skill] && A.skills[m.skill].topic]; });
+  var due = A.dueMisses(st).filter(function (m) { return allowed[A.skills[m.skill] && A.skills[m.skill].topic] && (!opts.concept || okS[m.skill]); });
   if (opts.onlyMisses) {
     var act = A.activeMisses(st).filter(function (m) { return allowed[A.skills[m.skill] && A.skills[m.skill].topic]; });
     if (!act.length) return null; var pool = noRepeat(act.map(function (m) { return m.skill; })); return pool[Math.floor(rng() * pool.length)];
@@ -127,7 +128,7 @@ A.nextItem = function (opts) {
   for (var tries = 0; tries < 10; tries++) {
     var sid = A.pickSkill(opts); if (!sid) return null;
     var seen = Object.assign({}, A.store.state.seen); A.recent.forEach(function (b, i) { seen[b] = (seen[b] || 0) + 1000 * (i + 1); });
-    var it = A.freshItem(sid, rr, seen); if (!it) continue;
+    var it = A.freshItem(sid, rr, seen, opts); if (!it) continue;
     if (A.recent.indexOf(A.baseId(it.id)) < 0) { best = it; break; }
     if (!best) best = it;
     opts.lastSkill = sid;

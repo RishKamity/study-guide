@@ -22,14 +22,18 @@
     if (e[2] === '*') { if (e[4] === 2) T.cal.push([e[1], e[3]]); return; }    /* v1 rating-shift events (e[4] !== 2) are ignored */
     var x = [e[1], e[3], e[4], e[5]]; T.all.push(x); (T.top[e[2]] || (T.top[e[2]] = [])).push(x);
   }
+  /* Recency-weighted hit rate. Recency is counted in units of question weight, so a quarter-weight answer
+     (a T/F claim, a retake) only nudges older answers back by a quarter step. Evidence is how much you have
+     answered, capped at what a full window of normal answers gives. A right answer always raises (or keeps)
+     the hit rate and never lowers the evidence, so it can never lower the score. */
   function tally(list, win, rec, now) {
-    var w = 0, c = 0, f = 1, n = 0;
-    for (var q = 0; q < list.length; q++) n += list[q][3] * timeF(list[q][0], now);   /* all evidence, for the margin */
-    for (var i = list.length - 1, j = 0; i >= 0 && j < win; i--, j++) {
-      var x = list[i], m = x[2] ? dmult(x[1]) : 2 - dmult(x[1]), ew = x[3] * f * timeF(x[0], now) * m;
-      w += ew; if (x[2]) c += ew; f *= rec;
+    var hw = 0, hc = 0, f = 1, n = 0, ev = 0, tw = 0, tt = 0, cap = 1.15 * (1 - Math.pow(rec, win)) / (1 - rec);
+    for (var i = list.length - 1; i >= 0; i--) {
+      var x = list[i], tf = timeF(x[0], now), m = x[2] ? dmult(x[1]) : 2 - dmult(x[1]), ew = x[3] * tf * m * f;
+      n += x[3] * tf; ev += x[3] * m; hw += ew; if (x[2]) hc += ew; tw += x[3] * f; tt += x[3] * f * tf; f *= Math.pow(rec, x[3]);
     }
-    return { w: w, c: c, n: n };
+    var e = Math.min(ev, cap) * (tw ? tt / tw : 1), h = hw ? hc / hw : 0;   /* idle days shrink the evidence, not the hit rate */
+    return { w: e, c: e * h, n: n };
   }
   function clampP(p) { return Math.max(C.FLOOR, Math.min(C.CEIL, p)); }
   function scoreOf(T, now) {

@@ -90,11 +90,26 @@ A.bankItem = function (topic, idx, s, variant) {
     difficulty: s.diff || 1, calc: !!s.calc, general: !!s.general, seconds: s.seconds || (s.calc ? 75 : 40), num: null, src: s.src || null, twin: s.twin || null
   };
 };
+/* concept questions: answerable in your head, no code to trace, no arithmetic. A bank item can force it either way
+   with concept: true / false; otherwise it counts as a concept question when it has no code block, table, entry,
+   calc flag, and no number-operator-number in the stem or options. Generators opt in with concept: true. */
+A.isConceptSpec = function (s) {
+  if (s.concept === true || s.concept === false) return s.concept;
+  if (s.calc || s.table || s.je || /```/.test(s.q)) return false;
+  var txt = [s.q, s.a].concat(s.w || []).join(' \n ');
+  return !/\d\s*[-+*\/%]\s*\d|\d\s*(==|!=|<=|>=|<|>)\s*\d/.test(txt);
+};
+A.conceptIdx = function (topic) {
+  A._cIdx = A._cIdx || {}; if (A._cIdx[topic]) return A._cIdx[topic];
+  var out = []; (A.banks[topic] || []).forEach(function (s, i) { if (A.isConceptSpec(s)) out.push(i); }); return (A._cIdx[topic] = out);
+};
+A.isConceptSkill = function (sid) { var sk = A.skills[sid]; if (!sk) return false; return sk.kind === 'bank' ? A.conceptIdx(sk.topic).length > 0 : !!sk.concept; };
+A.conceptCount = function () { return A.TOPICS.reduce(function (n, t) { return n + (A.skills[t.id + '.bank'] && t.exam ? A.conceptIdx(t.id).length : 0); }, 0); };
 /* pick N random generator ids for a topic (optionally a skill) */
 A.genId = function (topic, skill, seed) { return 'g:' + topic + ':' + skill + ':' + seed; };
 A.topicSkillIds = function (topic) { return Object.keys(A.skills).filter(function (k) { return A.skills[k].topic === topic; }); };
 /* make a fresh item for a skill id; avoid seeds/ids in `seen` */
-A.freshItem = function (skillId, rng, seen) {
+A.freshItem = function (skillId, rng, seen, o) {
   var sk = A.skills[skillId]; if (!sk) return null;
   seen = seen || {};
   if (sk.kind === 'gen') {
@@ -102,7 +117,8 @@ A.freshItem = function (skillId, rng, seen) {
     return A.makeItem(A.genId(sk.topic, sk.skill, Math.floor(rng() * 1e9)));
   }
   var bank = A.banks[sk.topic] || []; if (!bank.length) return null;
-  var idxs = []; for (var i = 0; i < bank.length; i++) idxs.push(i);
+  var idxs = []; if (o && o.concept) idxs = A.conceptIdx(sk.topic).slice(); else for (var i = 0; i < bank.length; i++) idxs.push(i);
+  if (!idxs.length) return null;
   idxs = rng.shuffle(idxs);
   var best = idxs[0], bestN = 1e9;
   /* how often each bank question was shown, across all its option-order variants (ids are b:topic:idx:variant) */

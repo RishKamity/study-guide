@@ -39,4 +39,9 @@ r = sim({ _: 1100, [TA]: 1500, [TB]: 1500 }, 800, { seed: 9 }); ok(Math.abs(r.pr
 { const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); Object.keys(A.SCORE_W).forEach((k, i) => { t += 30000; A.score.raw(['c' + i, t, k, 1300, 1, A.SCORE.CHECK_W]); }); const p = A.score.now(t).pct; ok(p > 87 && p < 93, `perfect quick check starts at ${p.toFixed(2)}%`); }
 // skipping mocks never lowers the ceiling: a perfect mock cannot push past what perfect practice can reach
 { const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); const k = Object.keys(A.SCORE_W); for (let i = 0; i < 3000; i++) { t += 10000; A.score.raw(['z' + i, t, k[i % k.length], 1450, 1, 1]); } const p0 = A.score.now(t).pct; A.score.calibrate('cal:z', t, 100); const p1 = A.score.now(t).pct; ok(p1 <= 100 * A.SCORE.CEIL + 1e-9 && p0 > 98.5, `max without a mock ${p0.toFixed(2)}%, with a perfect mock ${p1.toFixed(2)}% (cap ${(100 * A.SCORE.CEIL).toFixed(2)}%)`); }
+// a right answer never lowers the score, whatever its weight (T/F claims count 0.25, guesses 0.5, retakes 0.25)
+{ const A = loadA(); let t = Date.UTC(2026, 9, 27, 5); const k = Object.keys(A.SCORE_W); let worst = 0, rnd = 12345; const R = () => (rnd = (rnd * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let i = 0; i < 400; i++) { t += 15000; A.score.raw(['n' + i, t, k[i % k.length], [1150, 1300, 1450][i % 3], R() < 0.8 ? 1 : 0, 1]); }
+  for (let i = 0; i < 300; i++) { t += 15000; const kk = k[Math.floor(R() * k.length)], w = [0.25, 0.5, 1, 1.5][i % 4], d = [1150, 1300, 1450][i % 3], right = R() < 0.6; const b = A.score.now(t).pct; A.score.raw(['r' + i, t, kk, d, right ? 1 : 0, w]); if (right) worst = Math.min(worst, A.score.now(t).pct - b); }
+  ok(worst >= -1e-9, `a right answer never lowers the score (worst change ${worst.toFixed(4)})`); }
 console.log(fails ? 'FAIL ' + fails : 'PASS');

@@ -26,7 +26,8 @@ function md(src) {
 }
 const P = K.P, cdir = K.dir;
 const title = (rd(path.join(cdir, P.course)).match(/title:\s*'([^']+)'/) || [, 'Study Guide'])[1];
-const ref = P.reference && fs.existsSync(path.join(cdir, P.reference)) ? md(rd(path.join(cdir, P.reference))) : '';
+const ref = P.reference && fs.existsSync(path.join(cdir, P.reference)) ? md(rd(path.join(cdir, P.reference)))
+  : P.referenceHtml && fs.existsSync(path.join(cdir, P.referenceHtml)) ? rd(path.join(cdir, P.referenceHtml)) : '';   /* referenceHtml: a pack recovered by tools/repack.mjs */
 const cards = P.flashcards && fs.existsSync(path.join(cdir, P.flashcards)) ? JSON.parse(rd(path.join(cdir, P.flashcards))) : [];
 const parts = [];
 parts.push('<title>' + title.replace(/</g, '&lt;') + '</title>\n<meta name="claude:viewport-fit-sides" content="cover">');

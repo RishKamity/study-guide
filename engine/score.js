@@ -7,10 +7,9 @@
    replaying them, so merging two devices is a plain union and any model change re-scores the same history. */
 (function () {
   var C = A.SCORE = { E: 1325, DIFF: { 1: 1150, 2: 1300, 3: 1450 }, SAMPLE_D: 1350, TF_D: 1150,
-    PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28, CHECK_W: 1.7,
+    PRIOR: 0.6, PRIOR_N: 6, TOPIC_N: 4, TOPIC_WIN: 20, TOPIC_REC: 0.94, ALL_WIN: 60, ALL_REC: 0.97, MOCK_W: 0.4, Z: 1.28, CHECK_W: 1.7, CHECK_TARGET: 0.9,
     GRACE: 24 * 3600e3, DECAY_DAY: 0.9, DECAY_MIN: 0.6, FLOOR: 1 / (A.COURSE.format.options || 4), CEIL: 0.995, MAX_EV: 15000, LSK: A.KEY('score') };
   var TOPS = Object.keys(A.SCORE_W), TOTW = TOPS.reduce(function (s, k) { return s + A.SCORE_W[k]; }, 0) || 1;
-  C.CHECK_W = Math.max(1.3, 1.7 + 0.07 * (14 - TOPS.length));   /* fewer topics = fewer check questions, so each counts more */
   /* kept for tests and simulations: chance a student of rating r gets an item of rating d right */
   function expct(r, d) { return 1 / (1 + Math.pow(10, (d - r) / 400)); }
   A.pCorrect = function (r, d) { return C.FLOOR + (1 - C.FLOOR) * expct(r, d === undefined ? C.E : d); };
@@ -53,6 +52,14 @@
     if (cal) { pct = Math.min(100 * C.CEIL, (1 - C.MOCK_W) * pct + C.MOCK_W * Math.min(cal[1], 100 * C.CEIL)); pm *= (1 - C.MOCK_W); }
     return { pct: pct, ch: chp, per: per, pm: Math.max(0.5, pm), overall: m };
   }
+  /* quick-check weight: solved per course so a perfect check (one right answer per exam topic) reads CHECK_TARGET,
+     whether the exam has 5 topics or 30 (a fixed weight read 85% on big exams and 93% on small ones) */
+  C.CHECK_W = (function () {
+    function at(w) { var T = fresh(), t = 1e12; TOPS.forEach(function (k, i) { applyEv(T, ['c' + i, t + i, k, C.DIFF[2], 1, w]); }); return scoreOf(T, t + TOPS.length).pct; }
+    var lo = 0.2, hi = 20, goal = 100 * C.CHECK_TARGET; if (!TOPS.length || at(hi) < goal) return hi; if (at(lo) > goal) return lo;
+    for (var i = 0; i < 40; i++) { var mid = (lo + hi) / 2; if (at(mid) < goal) lo = mid; else hi = mid; }
+    return (lo + hi) / 2;
+  })();
   function cmp(a, b) { return a[1] - b[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0); }
 
   /* ---------- store ---------- */

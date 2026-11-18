@@ -18,7 +18,7 @@ U.views.session = { tab: 'endless', render: function (main, p) {
     if (p.concept) { o.concept = true; o.includeNew = true; if (!chapter) o.topics = A.TOPICS.filter(function (t) { return t.exam; }).map(function (t) { return t.id; }); }
     if (chapter > 0) o.chapter = chapter; else if (chapter === -1) o.topics = A.TOPICS.filter(function (t) { return t.ch === 0; }).map(function (t) { return t.id; });
     var it = A.nextItem(o);
-    if (!it && !p.onlyMisses && !includeNew) { o.includeNew = true; it = null; }
+    if (!it && !p.onlyMisses && !includeNew) { o.includeNew = true; it = A.nextItem(o); }   /* nothing started yet: draw from every topic instead of an empty screen */
     return it;
   }
   function next() {

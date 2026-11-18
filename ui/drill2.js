@@ -7,11 +7,15 @@
 
   /* ---- Drill menu cards ---- */
   A.HAS_CALC = function () { if (A._hasCalc === undefined) { A._hasCalc = false; var r = A.mulberry32(7); Object.keys(A.skills).some(function (k) { if (A.skills[k].kind !== 'gen') return false; try { var it = A.freshItem(k, r, {}); if (it && it.num !== null && it.num !== undefined && it.calc) { A._hasCalc = true; return true; } } catch (e) {} return false; }); } return A._hasCalc; };
+  /* Concepts only: on every tier (Drill tab), for studying without pen and paper */
+  U.conceptCard = function () {
+    if (A.conceptCount() < 10) return null;
+    return h('div', { class: 'card stack' }, h('div', { class: 'h3' }, 'Concepts only'), h('p', { class: 'muted small' }, 'Rules, definitions and traps you can answer in your head. No code to trace, no math, no pen needed.'), h('button', { class: 'btn', onclick: function () { U.go('session', { concept: true, title: 'Concepts only' }); } }, 'Start concepts'));
+  };
   U.drillModes = function () {
     var s = A.store.state, weakN = A.weakRank(s).filter(function (x) { return x.n > 0; }).length;
     function card(title, sub, view, label, params) { return h('div', { class: 'card stack' }, h('div', { class: 'h3' }, title), h('p', { class: 'muted small' }, sub), h('button', { class: 'btn', onclick: function () { U.go(view, params || {}); } }, label)); }
     return h('div', { class: 'stack' },
-      A.conceptCount() >= 10 ? card('Concepts only', 'Rules, definitions and traps you can answer in your head. No code to trace, no math, no pen needed.', 'session', 'Start concepts', { concept: true, title: 'Concepts only' }) : null,
       card('Weak spots', weakN ? 'Your lowest topics, ranked by how many exam points they cost you.' : 'Ranks your topics once you have answered some questions.', 'weak', 'See my weak spots'),
       (A.TWINS || []).length ? card('Twins', 'Look-alike concepts side by side, then a quick test on which is which.', 'twins', 'Open Twins') : null,
       A.HAS_CALC() ? card('Calc sprint', 'Type the number. Timed, calculator in hand.', 'calc', 'Start sprint') : null,

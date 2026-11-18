@@ -110,6 +110,7 @@ if (A.SAMPLE_READY) {
   /* generator output (30 seeds per skill) and the reference sheet are practice material too */
   for (const topic of Object.keys(A.gens)) for (const skill of Object.keys(A.gens[topic])) for (let sd = 1; sd <= 30; sd++) { try { const it = A.makeItem(A.genId(topic, skill, sd * 104729 + 7)); texts.push([`generator ${topic}.${skill}`, it.stem + ' ' + it.options.join(' ') + ' ' + (it.table ? JSON.stringify(it.table) : '')]); } catch (e) {} }
   if (K.P.reference && fs.existsSync(path.join(K.dir, K.P.reference))) texts.push(['reference.md', fs.readFileSync(path.join(K.dir, K.P.reference), 'utf8')]);
+  else if (K.P.referenceHtml && fs.existsSync(path.join(K.dir, K.P.referenceHtml))) texts.push(['reference.html', fs.readFileSync(path.join(K.dir, K.P.referenceHtml), 'utf8').replace(/<[^>]+>/g, ' ')]);
   let leaks = 0;
   texts.forEach(([where, txt]) => {
     const g = grams(txt); for (const x of g) if (sampleGrams.has(x)) { leaks++; if (leaks <= 8) FAIL(`sample leak: ${where} repeats sample wording "${x}"`); break; }

@@ -107,6 +107,8 @@ Create one one-shot scheduled task per day from tomorrow until the day before th
 
 When new files arrive (new lecture transcripts, a released review sheet): re-run Phases 2-3 for the affected units, update the pack, validate, smoke, re-render changed audio tracks, and republish to the same URL. Progress carries over.
 
+**Engine updates for guides already published.** A published page is a snapshot of the engine it was built with. To move it to the current engine when its course folder is not on this machine, download the page (`Artifact` read with `path: "index.html"`), run `node tools/repack.mjs <page> courses/<id>` to recover the course pack (every course file is kept whole inside the page), then build, validate, smoke and republish to the same URL. Check first that the page does not rely on engine features this repo lacks (for example a branch that was never merged): rebuilding would drop them. Audio files already published stay in place.
+
 ## Finish
 
 Tell the student in 3-6 lines: what the guide has (tier, number of topics, questions available, lessons, mocks, audio minutes), the plan's first step, what is sealed and when it unlocks, what was filled from general knowledge, and point to `DECISIONS.md` / `CONFLICTS.md`. Do not recap your steps.
@@ -127,4 +129,6 @@ Tell the student in 3-6 lines: what the guide has (tier, number of topics, quest
 - **The predicted score used to need hundreds of answers** (an Elo rating that never settled; a perfect run of 500 read under 94%). It now comes from each topic's recent hit rate, pulled toward the overall rate as far as the exam is covered, with a ± margin; a one-question-per-topic quick check (all right ≈ 90%) sets the start, and the latest full mock blends in at 40% but can never raise the 99.5% cap, so mocks are never required. `tests/score_sim.mjs` guards all of this.
 - **Right answers lowered the predicted score** (CS 159 build): a quarter-weight T/F answer bumped every older answer back a full recency step, so a correct claim could drop the score. Recency now counts in units of question weight and idle days shrink evidence, not the hit rate; `score_sim.mjs` checks that a right answer of any weight never lowers the score.
 - **Students study without pen and paper.** Drill has a Concepts only mode (no code, no math); keep bank stems that need tracing in code blocks so the filter can tell them apart, and mark exceptions with `concept: true/false`.
+- **The quick check read 85% on big exams and 93% on small ones** with a fixed weight. The engine now solves the weight per course so a perfect quick check reads 90% whatever the topic count.
+- **Endless was blank on a fresh Quick-tier guide**: the empty-pool fallback set its flag but never asked for a question again. It now draws from every topic until something is started.
 - **Start the audio render early.** It is the slowest step and runs fine in the background.

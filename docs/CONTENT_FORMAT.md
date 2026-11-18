@@ -129,7 +129,7 @@ A.defBank('1A', [
 - **15+ questions for any topic without a generator.** Fewer makes stations and Endless loop (validate fails under 8, warns under 15).
 - Each wrong answer encodes a real mistake, and its reason says why it is tempting and why it is wrong.
 - `general: true` marks content written from standard textbook knowledge because the course files barely cover it; the app shows "Not from your course files".
-- **Concepts only drill.** A bank question counts as a concept question (answerable in your head, no pen) when it has no code block, table, entry or `calc`, and no number-operator-number in its stem or options. Force it with `concept: true` or `concept: false`; generators opt in with `concept: true` on the skill. The Drill tab shows the card once there are 10+ concept questions.
+- **Concepts only drill.** A bank question counts as a concept question (answerable in your head, no pen) when it has no code block, table, entry or `calc`, no number-operator-number or scientific notation, and fewer than three numbers in its stem. Force it with `concept: true` or `concept: false`; generators opt in with `concept: true` on the skill. The Drill tab shows the card once there are 10+ concept questions.
 
 ## Stations (`A.STATIONS[id]`)
 

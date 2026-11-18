@@ -67,22 +67,13 @@
       wrap.appendChild(mc);
     }
     /* per topic, weakest first. Topics with fewer than MIN answers sort last (too few to judge); ties go to the topic
-       with more exam questions. The weakest five get a button straight to their lesson. */
+       with more exam questions. Tapping a row opens that topic's lesson. */
     var MIN = 3, rows = A.TOPICS.filter(function (t) { return t.exam; }).map(function (t) { var p = S.per[t.id] || [0, 0]; return { t: t, n: p[0], acc: p[0] ? 100 * p[1] / p[0] : null }; });
     rows.sort(function (a, b) { var ea = a.n >= MIN, eb = b.n >= MIN; if (ea !== eb) return ea ? -1 : 1; if (!ea) return a.t.order - b.t.order; return a.acc - b.acc || (b.t.exam || 0) - (a.t.exam || 0) || a.t.order - b.t.order; });
-    var judged = rows.filter(function (r) { return r.n >= MIN; });
-    if (judged.length >= 5) {
-      var wc = h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'Your 5 weakest topics'), h('p', { class: 'muted', style: { margin: 0, fontSize: '13px' } }, 'Lowest accuracy so far, from ' + S.answered + ' answers. Do these lessons first.'));
-      judged.slice(0, 5).forEach(function (r, i) {
-        var has = !!A.STATIONS[r.t.id];
-        wc.appendChild(h('div', { class: 'swk' }, h('b', null, String(i + 1)), h('div', { class: 'swn' }, h('span', null, r.t.id + ' · ' + r.t.title), h('small', { class: 'muted' }, Math.round(r.acc) + '% of ' + r.n + (r.t.exam ? ' · ' + r.t.exam + ' exam question' + (r.t.exam === 1 ? '' : 's') : '') + (A.stationDone(r.t.id, st) ? ' · lesson done' : ''))),
-          h('div', { class: 'row', style: { gap: '6px', flexWrap: 'nowrap' } }, has ? h('button', { class: 'btn sm', onclick: function () { U.go('station', { id: r.t.id }); } }, 'Lesson') : null, h('button', { class: 'btn ghost sm', onclick: function () { U.go('session', { title: 'Weak spot ' + r.t.id, topics: [r.t.id], noFilter: true }); } }, 'Drill'))));
-      });
-      wrap.insertBefore(wc, wrap.children[2] || null);
-    }
-    var tc = h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'By topic · weakest first'));
+    var tc = h('div', { class: 'card stack' }, h('div', { class: 'eyebrow' }, 'By topic · weakest first · tap one to open its lesson'));
     rows.forEach(function (r) {
-      tc.appendChild(h('div', { class: 'strow' }, h('span', { class: 'sn' }, r.t.id + ' · ' + r.t.title), h('div', null, r.acc === null ? h('div', { class: 'bar' }) : bar(r.acc)), h('span', { class: 'sv' }, r.n ? Math.round(r.acc) + '% of ' + r.n : '—')));
+      var has = !!A.STATIONS[r.t.id];
+      tc.appendChild(h('button', { class: 'strow', type: 'button', title: has ? 'Open the ' + r.t.id + ' lesson' : 'Drill ' + r.t.id, onclick: function () { if (has) U.go('station', { id: r.t.id }); else U.go('session', { title: 'Weak spot ' + r.t.id, topics: [r.t.id], noFilter: true }); } }, h('span', { class: 'sn' }, r.t.id + ' · ' + r.t.title), h('div', null, r.acc === null ? h('div', { class: 'bar' }) : bar(r.acc)), h('span', { class: 'sv' }, r.n ? Math.round(r.acc) + '% of ' + r.n : '—')));
     });
     if (rows.some(function (r) { return r.n < MIN; })) tc.appendChild(h('small', { class: 'muted' }, 'Topics with fewer than ' + MIN + ' answers are listed last.'));
     wrap.appendChild(tc);

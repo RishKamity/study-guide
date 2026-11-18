@@ -28,7 +28,7 @@
       if (c === ' ') { if (!out.length || out[out.length - 1].k !== 'sp') out.push({ k: 'sp' }); i++; continue; }
       if (isSup(c)) { var t = ''; while (i < s.length && isSup(s[i])) { t += SUP[s[i]]; i++; } attach(out, 'sup', t); continue; }
       if (isSub(c)) { var u = ''; while (i < s.length && isSub(s[i])) { u += SUB[s[i]]; i++; } attach(out, 'sub', u); continue; }
-      if (c === '′' || c === '″' || c === "'") { attach(out, 'prime', c === '″' ? "''" : "'"); i++; continue; }
+      if (c === '′' || c === '″' || c === '‴' || c === "'") { attach(out, 'prime', c === '″' ? "''" : c === '‴' ? "'''" : "'"); i++; continue; }
       if (c === '/') { out.push({ k: 'slash' }); i++; continue; }
       if (c === '^') { out.push({ k: 'caret' }); i++; continue; }
       if (c === '_') { out.push({ k: 'under' }); i++; continue; }
@@ -107,7 +107,7 @@
         var exA = [nx2]; if ((nx2.k === 'fn' || nx2.k === 'word') && atoms[i + 2] && atoms[i + 2].k === 'grp' && !nx2.sup) { exA.push(atoms[i + 2]); }
         var ex = nx2.k === 'grp' && nx2.o === '(' ? emit(nx2.kids) : emit(exA);
         /* fractions in an exponent stay inline (e^{−1/x}): a stacked fraction there is too small to read */
-        ex = ex.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function (_, a, b) { var w = function (t) { return /[\s+\-]/.test(t.replace(/^-/, '')) ? '(' + t + ')' : t; }; return w(a) + '/' + w(b); });
+        ex = ex.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function (_, a, b) { var w = function (t, den) { return /[\s+\-]/.test(den ? t : t.replace(/^-/, '')) ? '(' + t + ')' : t; }; return w(a) + '/' + w(b, true); });
         if (exA.length > 1) i++;
         var prev = chunks.length ? chunks[chunks.length - 1] : null;
         if (prev && !prev.brk) prev.tex = '{' + prev.tex + '}';

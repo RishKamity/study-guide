@@ -13,16 +13,17 @@ const a = html.indexOf('(function(){"use strict";\n'), b = html.lastIndexOf('\nw
 if (a < 0 || b < 0) { console.error('not a study-guide build (no app script found)'); process.exit(1); }
 const js = html.slice(a + '(function(){"use strict";\n'.length, b).replace(/<\\\/script/gi, '</script');
 /* segment starts: file headers and the two data lines; each segment ends where the next "\n;\n" + start begins */
-const re = /(^|\n;\n)(\/\* ((?:engine|ui|courses)\/[^\s]+) \*\/\n|A\.FLASHCARDS = |A\.REF_HTML = )/g;
+const re = /(^|\n;\n)(\/\* ((?:engine|ui|courses)\/[^\s]+) \*\/\n|A\.FLASHCARDS = |A\.REF_HTML = |A\.MATH = )/g;
 const marks = []; let m;
 while ((m = re.exec(js))) marks.push({ at: m.index + m[1].length, body: m.index + m[0].length, file: m[3] || null, data: m[3] ? null : m[2].slice(2, -3) });
 if (!marks.length) { console.error('no file headers found'); process.exit(1); }
 const files = [], seg = (i) => js.slice(marks[i].body, i + 1 < marks.length ? marks[i + 1].at - 3 : js.length);
-let cards = [], ref = '', id = null;
+let cards = [], ref = '', id = null, math = false;
 marks.forEach((k, i) => {
   const body = seg(i);
   if (k.data === 'FLASHCARDS') cards = JSON.parse(body.replace(/;\s*$/, ''));
   else if (k.data === 'REF_HTML') ref = JSON.parse(body.replace(/;\s*$/, ''));
+  else if (k.data === 'MATH') math = /^true/.test(body);
   else if (k.file && k.file.startsWith('courses/')) { const p = k.file.split('/'); id = id || p[1]; files.push([p.slice(2).join('/'), body]); }
 });
 if (!files.length) { console.error('no course files found (built before course packs had their own folder?)'); process.exit(1); }
@@ -33,5 +34,6 @@ fs.writeFileSync(path.join(out, 'reference.html'), ref);
 const names = files.map(x => x[0]), course = names.find(f => f === 'course.js') || names[0], audio = names.find(f => /^audio\/tracks\.js$/.test(f));
 const pk = { course, files: names.filter(f => f !== course && f !== audio), flashcards: 'flashcards.json', referenceHtml: 'reference.html', repackedFrom: id };
 if (audio) pk.audio = audio;
+if (math) pk.math = 'katex';   /* the page typeset $…$ with KaTeX */
 fs.writeFileSync(path.join(out, 'pack.json'), JSON.stringify(pk, null, 2));
 console.log(`repacked ${id}: ${names.length} course files, ${cards.length} flashcards, reference ${ref.length ? 'yes' : 'none'} -> ${out}`);

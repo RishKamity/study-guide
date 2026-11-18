@@ -312,3 +312,27 @@ pre.code{font-family:var(--font-m);font-size:13px;line-height:1.45;background:va
 .mx .katex-html > .base { overflow-x: auto; overflow-y: hidden; vertical-align: middle; padding: 2px 0; }
 .mono .mx .katex, .math .mx .katex { font-size: 1.05em; }
 td .mx .katex, th .mx .katex { font-size: 1em; }
+
+/* sign charts and graphs (lesson visuals) */
+table.signs{border-collapse:collapse;width:100%;font-size:14px}
+table.signs th,table.signs td{text-align:center;padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.signs thead th{border-bottom:2px solid var(--text-3);font-weight:700;color:var(--text)}
+table.signs th.nm{text-align:left;padding-right:8px;font-weight:600;color:var(--text-2)}
+table.signs td.pt,table.signs th.pt{color:var(--text-3);width:1%}
+table.signs thead th.pt{color:var(--text)}
+table.signs td.pos b{color:var(--good)} table.signs td.neg b{color:var(--bad)}
+table.signs .mk{color:var(--accent);font-weight:700}
+.plotwrap svg{width:100%;height:auto;display:block;background:var(--surface-2);border:1px solid var(--line);border-radius:10px}
+.plot .pg{stroke:var(--line);stroke-width:.6}
+.plot .pa{stroke:var(--text-3);stroke-width:1.2}
+.plot .pd{stroke:var(--text-2);stroke-width:1.3;stroke-dasharray:5 4}
+.plot .pc{fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.plot .pp{fill:var(--accent);stroke:var(--surface);stroke-width:1.5}
+.plot .po{fill:var(--surface-2);stroke:var(--accent);stroke-width:2}
+.plot .pt{fill:var(--text-3);font-size:10px;font-family:var(--font-m, monospace)}
+.plot .pl{fill:var(--text);font-size:12px;font-weight:600;font-family:var(--font-b, sans-serif);paint-order:stroke;stroke:var(--surface-2);stroke-width:3px}
+.opt .tx .plotwrap{min-width:200px}
+/* worked steps: on a phone the step label sits above the step so formulas, charts and graphs get the full width */
+.wstep .lab{max-width:130px}
+@media (max-width:560px){.wstep{grid-template-columns:1fr;gap:4px}.wstep .lab{max-width:none;min-width:0}}
+.wstep .vis{margin-top:8px}

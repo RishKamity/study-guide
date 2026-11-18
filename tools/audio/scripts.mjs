@@ -12,7 +12,8 @@ const wc = t => String(t).split(/\s+/).filter(Boolean).length;
 function stationScript(id) {
   const T = A.TOPIC[id], s = S[id], out = [end(T.title)]; if (s.intro) out.push(end(s.intro));
   (s.cards || []).forEach(c => { out.push(end(c.h)); [].concat(c.rule || []).forEach(r => out.push(end(r))); if (c.analogy) out.push('Think of it this way. ' + end(c.analogy)); if (c.trap && c.trap.t) out.push('Watch the trap. ' + end(c.trap.t)); });
-  if (s.worked) { out.push('Now a worked example. ' + end(s.worked.title)); out.push(end(s.worked.setup)); (s.worked.steps || []).slice(0, 6).forEach((st, i) => out.push('Step ' + (i + 1) + '. ' + end(st.action) + ' ' + end(st.math) + (st.why ? ' ' + end(st.why) : ''))); }
+  const W1 = [].concat(s.worked || [])[0];   /* a station may hold several worked examples; the audio reads the first */
+  if (W1) { out.push('Now a worked example. ' + end(W1.title)); out.push(end(W1.setup)); (W1.steps || []).slice(0, 6).forEach((st, i) => out.push('Step ' + (i + 1) + '. ' + end(st.action) + ' ' + end(st.math) + (st.why ? ' ' + end(st.why) : ''))); }
   out.push('Pause here and do the practice set for this topic.'); return out;
 }
 const when = new Date(A.EXAM_AT).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });

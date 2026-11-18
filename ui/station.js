@@ -2,6 +2,8 @@
 U.views.station = { tab: 'path', render: function (main, p) {
   var id = p.id, T = A.TOPIC[id], S = A.STATIONS[id];
   if (!T || !S) { main.appendChild(U.h('div', { class: 'card' }, 'This station is not built yet.', U.h('button', { class: 'btn', onclick: function () { U.go('path'); } }, 'Back to Path'))); return; }
+  /* worked and faded may each be one example or a list of them (a station can hold several full problems) */
+  var WK = [].concat(S.worked || []), FD = [].concat(S.faded || []);
   var st = A.store.state.stations[id], step = Math.min(st ? st.step : 0, 6), done = st && st.step >= 7;
   var stage = U.h('div', { class: 'stack' }); var bar = U.h('div', { class: 'steps' });
   var head = U.h('div', null, U.h('div', { class: 'eyebrow' }, A.CHAPTERS[T.ch] + ' · ' + T.id), U.h('h1', { class: 'h1', style: { marginTop: '4px' } }, T.title));
@@ -13,7 +15,7 @@ U.views.station = { tab: 'path', render: function (main, p) {
   function place(stepN, patch) { if (patch === null) { pl = { step: stepN }; } else { pl = Object.assign({}, pl.step === stepN ? pl : { step: stepN }, patch || {}); } pl.ok = ok; pl.tot = tot; U.place.set(pkey, pl); }
   function resumeFor(stepN) { return pl.step === stepN ? pl : null; }
   var SHORT = ['Warm-up', 'Pretest', 'Lesson', 'Worked', 'Your turn', 'Practice', 'Exit'];
-  function hasStep(i) { return i === 3 ? !!S.worked : i === 4 ? !!S.faded : true; }
+  function hasStep(i) { return i === 3 ? WK.length > 0 : i === 4 ? FD.length > 0 : true; }
   function setBar(cur) {
     U.clear(bar); bar.className = 'stepnav'; bar.setAttribute('role', 'tablist'); bar.setAttribute('aria-label', 'Station steps');
     for (var i = 0; i < 7; i++) (function (i) {
@@ -65,61 +67,76 @@ U.views.station = { tab: 'path', render: function (main, p) {
     function show() {
       U.clear(stage); var c = cards[i]; place(2, { sub: i });
       var body = U.h('div', { class: 'card lesson stack' }, U.h('div', { class: 'eyebrow' }, 'Lesson · card ' + (i + 1) + ' of ' + cards.length), U.h('h3', null, c.h), c.general ? U.h('span', { class: 'pill gen', title: 'Written from standard textbook knowledge because your course files barely cover this. Check it against your notes.' }, 'Not from your course files') : null,
-        U.h('ul', null, c.rule.map(function (r) { return U.h('li', null, r); })), U.visual(c.visual),
+        U.h('ul', null, c.rule.map(function (r) { return U.h('li', null, U.h('span', null, r)); })), U.visual(c.visual),
         c.hook ? U.h('div', { class: 'box hook' }, U.h('b', { class: 'k' }, 'Remember'), c.hook) : null,
         c.analogy ? U.h('div', { class: 'box' }, U.h('b', { class: 'k' }, 'Think of it as'), c.analogy) : null,
         c.trap ? U.h('div', { class: 'box trap' }, U.h('b', { class: 'k' }, 'Exam trap'), c.trap.t, c.trap.quote ? U.h('div', { class: 'quote' }, '“' + c.trap.quote.text + '” — ' + (A.COURSE.instructor ? A.COURSE.instructor + ', ' : '') + 'Lecture ' + c.trap.quote.lec + (c.trap.quote.ts ? ' at ' + c.trap.quote.ts : '')) : null) : null);
       stage.appendChild(body);
       var nav = U.h('div', { class: 'row' }, i > 0 ? U.h('button', { class: 'btn ghost', onclick: function () { i--; show(); } }, 'Back') : null,
-        U.h('button', { class: 'btn', style: { flex: 1 }, onclick: function () { if (i < cards.length - 1) { i++; show(); } else go(S.worked ? 3 : (S.faded ? 4 : 5)); } }, i < cards.length - 1 ? 'Next card' : (S.worked ? 'See a worked example' : 'Start practice')));
+        U.h('button', { class: 'btn', style: { flex: 1 }, onclick: function () { if (i < cards.length - 1) { i++; show(); } else go(WK.length ? 3 : (FD.length ? 4 : 5)); } }, i < cards.length - 1 ? 'Next card' : (WK.length ? 'See a worked example' : 'Start practice')));
       stage.appendChild(nav); window.scrollTo(0, 0);
-      setKeys(function (e) { if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); if (i < cards.length - 1) { i++; show(); } else go(S.worked ? 3 : (S.faded ? 4 : 5)); } else if (e.key === 'ArrowLeft' && i > 0) { i--; show(); } });
+      setKeys(function (e) { if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); if (i < cards.length - 1) { i++; show(); } else go(WK.length ? 3 : (FD.length ? 4 : 5)); } else if (e.key === 'ArrowLeft' && i > 0) { i--; show(); } });
     }
     show();
   }
   function stepCard(s, i, n) {
-    return U.h('div', { class: 'wstep' }, U.h('div', { class: 'lab' }, U.tex(s.label)), U.h('div', null, U.h('div', { class: 'act' }, s.action), s.math ? U.h('div', { class: 'math' }, s.math) : null, s.je ? U.jeTable(s.je) : null, s.why ? U.h('div', { class: 'why' }, s.why) : null));
+    return U.h('div', { class: 'wstep' }, U.h('div', { class: 'lab' }, U.tex(s.label)), U.h('div', null, U.h('div', { class: 'act' }, s.action), s.math ? U.h('div', { class: 'math' }, s.math) : null, s.je ? U.jeTable(s.je) : null, s.visual ? U.visual(s.visual) : null, s.why ? U.h('div', { class: 'why' }, s.why) : null));
   }
   function worked() {
-    var W = S.worked, i = 0; U.clear(stage);
-    var list = U.h('div', { class: 'stack' }), btnRow = U.h('div');
-    stage.appendChild(U.h('div', { class: 'card stack' }, title(/^worked example/i.test(W.title) ? W.title : 'Worked example · ' + W.title, 'Read each step and ask yourself why it is the next step.'), U.rich(W.setup, 'callout'), list));
-    stage.appendChild(btnRow);
-    function more() {
-      list.appendChild(stepCard(W.steps[i], i, W.steps.length)); i++; place(3, { sub: i }); U.clear(btnRow);
-      btnRow.appendChild(i < W.steps.length ? nextBtn('Next step', more) : nextBtn(S.faded ? 'Try one yourself' : 'Start practice', function () { go(S.faded ? 4 : 5); }));
+    var rw = resumeFor(3), e = rw && rw.ex ? Math.min(rw.ex, WK.length - 1) : 0;
+    function show(upto) {
+      var W = WK[e], i = 0; U.clear(stage); window.scrollTo(0, 0);
+      var list = U.h('div', { class: 'stack' }), btnRow = U.h('div', { class: 'stack' });
+      var lab = (WK.length > 1 ? 'Worked example ' + (e + 1) + ' of ' + WK.length : 'Worked example') + ' · ' + W.title.replace(/^worked example\s*·?\s*/i, '');
+      stage.appendChild(U.h('div', { class: 'card stack' }, title(lab, 'Read each step and ask yourself why it is the next step.'), U.rich(W.setup, 'callout'), list));
+      stage.appendChild(btnRow);
+      function more() {
+        list.appendChild(stepCard(W.steps[i], i, W.steps.length)); i++; place(3, { ex: e, sub: i }); U.clear(btnRow);
+        if (i < W.steps.length) btnRow.appendChild(nextBtn('Next step', more));
+        else if (e < WK.length - 1) { btnRow.appendChild(nextBtn('Next worked example', function () { e++; place(3, { ex: e, sub: 1 }); show(1); })); btnRow.appendChild(U.h('button', { class: 'btn ghost block', onclick: function () { go(FD.length ? 4 : 5); } }, FD.length ? 'Skip to your turn' : 'Skip to practice')); }
+        else btnRow.appendChild(nextBtn(FD.length ? 'Try one yourself' : 'Start practice', function () { go(FD.length ? 4 : 5); }));
+      }
+      more(); while (i < Math.min(upto, W.steps.length)) more();
     }
-    var rw = resumeFor(3), upto = rw && rw.sub ? Math.min(rw.sub, W.steps.length) : 1;
-    more(); while (i < upto) more();
-    setKeys(function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); var b = btnRow.querySelector('button'); if (b) b.click(); } });
+    show(rw && rw.sub ? rw.sub : 1);
+    setKeys(function (e2) { if (e2.key === 'Enter' || e2.key === ' ') { e2.preventDefault(); var all = stage.querySelectorAll('button.btn.block:not(.ghost)'), b = all[all.length - 1]; if (b) b.click(); } });
   }
   function faded() {
-    var F = S.faded, i = 0, rfd = resumeFor(4), skipTo = rfd && rfd.sub ? rfd.sub : 0, pending = rfd && rfd.ans !== undefined && rfd.ans !== null ? rfd.ans : null; U.clear(stage);
-    var list = U.h('div', { class: 'stack' }), area = U.h('div');
-    stage.appendChild(U.h('div', { class: 'card stack' }, title(/^your turn/i.test(F.title) ? F.title : 'Your turn · ' + F.title, 'The same idea with fewer hints. Answer each step.'), U.rich(F.setup, 'callout'), list)); stage.appendChild(area);
-    function next() {
-      U.clear(area); if (i >= F.steps.length) { area.appendChild(nextBtn('Start practice', function () { go(5); })); return; }
-      var s = F.steps[i]; i++;
-      if (!s.ask || i <= skipTo) { list.appendChild(stepCard(s)); next(); return; }
-      place(4, { sub: i - 1, ans: null });
-      var box = U.h('div', { class: 'card stack' }), done = false;
-      box.appendChild(U.h('div', { class: 'eyebrow' }, U.tex(s.label))); box.appendChild(U.h('div', { class: 'act', style: { fontWeight: 600 } }, s.action)); box.appendChild(U.h('div', null, s.ask.q));
-      var opts = U.h('div', { class: 'opts' });
-      var ao = (function () { var r = A.mulberry32(A.hash(s.label + '|' + s.ask.q)), idx = r.shuffle(s.ask.opts.map(function (_, q) { return q; })); return { opts: idx.map(function (q) { return s.ask.opts[q]; }), ans: idx.indexOf(s.ask.ans) }; })();
-      ao.opts.forEach(function (t, k) {
-        var el = U.h('div', { class: 'opt' }); var b = U.h('button', { class: 'optmain', type: 'button', onclick: function () {
-          if (done) return; done = true; var good = k === ao.ans; if (!b.restoring) U.sfx(good ? 'ok' : 'bad'); place(4, { sub: i - 1, ans: k });
-          Array.prototype.forEach.call(opts.children, function (o, j) { o.classList.add('locked'); if (j === ao.ans) o.classList.add('ok'); else if (j === k) o.classList.add('bad'); });
-          box.appendChild(U.h('div', { class: 'callout ' + (good ? 'good' : 'bad') }, (good ? 'Right. ' : 'Not quite. ') + s.ask.why));
-          if (s.je) box.appendChild(U.jeTable(s.je));
-          box.appendChild(nextBtn('Continue', function () { list.appendChild(stepCard(s)); box.remove(); place(4, { sub: i, ans: null }); next(); }));
-        } }, U.h('span', { class: 'lt' }, U.letters[k]), U.h('span', { class: 'tx' }, t));
-        el.appendChild(b); opts.appendChild(el);
-      });
-      box.appendChild(opts); area.appendChild(box);
-      if (pending !== null) { var kk = pending; pending = null; var bt = opts.children[kk] && opts.children[kk].querySelector('button'); if (bt) { bt.restoring = true; bt.click(); } }
+    var rfd = resumeFor(4), e = rfd && rfd.ex ? Math.min(rfd.ex, FD.length - 1) : 0;
+    function show(skipTo, pending) {
+      var F = FD[e], i = 0; U.clear(stage); window.scrollTo(0, 0);
+      var list = U.h('div', { class: 'stack' }), area = U.h('div');
+      var lab = (FD.length > 1 ? 'Your turn ' + (e + 1) + ' of ' + FD.length : 'Your turn') + ' · ' + F.title.replace(/^your turn\s*·?\s*/i, '');
+      stage.appendChild(U.h('div', { class: 'card stack' }, title(lab, FD.length > 1 ? 'A full problem. Answer each step, then check it against the worked solution that builds up above.' : 'The same idea with fewer hints. Answer each step.'), U.rich(F.setup, 'callout'), list)); stage.appendChild(area);
+      function endBtns() {
+        if (e < FD.length - 1) { area.appendChild(U.h('div', { class: 'stack' }, nextBtn('Next problem', function () { e++; place(4, { ex: e, sub: 0, ans: null }); show(0, null); }), U.h('button', { class: 'btn ghost block', onclick: function () { go(5); } }, 'Skip to practice'))); }
+        else area.appendChild(nextBtn('Start practice', function () { go(5); }));
+      }
+      function next() {
+        U.clear(area); if (i >= F.steps.length) { endBtns(); return; }
+        var s = F.steps[i]; i++;
+        if (!s.ask || i <= skipTo) { list.appendChild(stepCard(s)); next(); return; }
+        place(4, { ex: e, sub: i - 1, ans: null });
+        var box = U.h('div', { class: 'card stack' }), done = false;
+        box.appendChild(U.h('div', { class: 'eyebrow' }, U.tex(s.label))); box.appendChild(U.h('div', { class: 'act', style: { fontWeight: 600 } }, s.action)); box.appendChild(U.h('div', null, s.ask.q));
+        var opts = U.h('div', { class: 'opts' });
+        var ao = (function () { var r = A.mulberry32(A.hash(s.label + '|' + s.ask.q)), idx = r.shuffle(s.ask.opts.map(function (_, q) { return q; })); return { opts: idx.map(function (q) { return s.ask.opts[q]; }), ans: idx.indexOf(s.ask.ans) }; })();
+        ao.opts.forEach(function (t, k) {
+          var el = U.h('div', { class: 'opt' }); var b = U.h('button', { class: 'optmain', type: 'button', onclick: function () {
+            if (done) return; done = true; var good = k === ao.ans; if (!b.restoring) U.sfx(good ? 'ok' : 'bad'); place(4, { ex: e, sub: i - 1, ans: k });
+            Array.prototype.forEach.call(opts.children, function (o, j) { o.classList.add('locked'); if (j === ao.ans) o.classList.add('ok'); else if (j === k) o.classList.add('bad'); });
+            box.appendChild(U.h('div', { class: 'callout ' + (good ? 'good' : 'bad') }, (good ? 'Right. ' : 'Not quite. ') + s.ask.why));
+            if (s.je) box.appendChild(U.jeTable(s.je));
+            box.appendChild(nextBtn('Continue', function () { list.appendChild(stepCard(s)); box.remove(); place(4, { ex: e, sub: i, ans: null }); next(); }));
+          } }, U.h('span', { class: 'lt' }, U.letters[k]), U.h('span', { class: 'tx' }, t && typeof t === 'object' ? (t.type === 'plot' ? U.plot(t, true) : U.visual(t)) : t));
+          el.appendChild(b); opts.appendChild(el);
+        });
+        box.appendChild(opts); area.appendChild(box);
+        if (pending !== null && pending !== undefined) { var kk = pending; pending = null; var bt = opts.children[kk] && opts.children[kk].querySelector('button'); if (bt) { bt.restoring = true; bt.click(); } }
+      }
+      next();
     }
-    next(); setKeys(null);
+    show(rfd && rfd.sub ? rfd.sub : 0, rfd && rfd.ans !== undefined ? rfd.ans : null); setKeys(null);
   }
   function practice() {
     var rounds = 0; function round() {
@@ -150,8 +167,8 @@ U.views.station = { tab: 'path', render: function (main, p) {
   }
   function run(n) {
     setBar(n); window.scrollTo(0, 0); U.clear(stage); setKeys(null);
-    if (n === 0) warmup(); else if (n === 1) pretest(); else if (n === 2) lesson(); else if (n === 3) { if (S.worked) worked(); else go(S.faded ? 4 : 5); }
-    else if (n === 4) { if (S.faded) faded(); else go(5); } else if (n === 5) practice(); else exit();
+    if (n === 0) warmup(); else if (n === 1) pretest(); else if (n === 2) lesson(); else if (n === 3) { if (WK.length) worked(); else go(FD.length ? 4 : 5); }
+    else if (n === 4) { if (FD.length) faded(); else go(5); } else if (n === 5) practice(); else exit();
   }
   if (done) { run(2); stage.insertBefore(U.h('div', { class: 'callout good' }, 'You finished this station. Reviewing the lesson again is fine.'), stage.firstChild); setBar(7); }
   else if (step === 0 && !st) { stage.appendChild(U.h('div', { class: 'card stack' }, U.h('p', null, S.intro), U.h('p', { class: 'muted small' }, 'About ' + T.mins + ' minutes. Warm-up, pretest, lesson, worked example, practice, exit ticket.'), nextBtn('Start station', function () { run(0); }), p.skim ? U.h('p', { class: 'muted small' }, 'Short on time? Your plan suggests practice only for this topic.') : null, p.skim ? U.h('button', { class: 'btn ghost block', onclick: function () { A.markSkim(id); U.go('session', { title: T.title + ' \u00B7 practice only', topics: [id], noFilter: true }); } }, 'Practice only (skip the lesson)') : null)); setBar(0); }

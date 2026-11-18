@@ -9,7 +9,7 @@ const dir = path.resolve(process.argv[2] || 'courses/demo'); const url = 'file:/
   const stem = () => p.evaluate(() => { const s = document.querySelector('main .stem'); return s ? s.textContent : null; });
   const go = (v, prm) => p.evaluate(([v, prm]) => U.go(v, prm || undefined), [v, prm]);
   await p.goto(url); await p.waitForTimeout(400);
-  const first = await p.evaluate(() => A.TOPICS.find(t => t.exam && A.STATIONS[t.id]).id);
+  const first = await p.evaluate(() => { const t = A.TOPICS.find(t => t.exam && A.STATIONS[t.id]); return t ? t.id : null; });   /* Quick-tier guides have no stations */
 
   // Endless: same question after a tab switch
   await go('endless'); await p.waitForTimeout(150);
@@ -31,6 +31,7 @@ const dir = path.resolve(process.argv[2] || 'courses/demo'); const url = 'file:/
   const s2 = await stem(); await go('today'); await go('endless'); await p.waitForTimeout(150);
   log(s2 && s2 !== s1 && (await stem()) === s2, 'Next question moves on, and the new question is kept too');
 
+  if (first) {
   // Station: lesson card index survives a tab switch and a reload
   await p.evaluate((id) => { delete A.store.state.stations[id]; A.setStation(id, { step: 2 }); U.place.del('station:' + id); U.go('station', { id }); }, first); await p.waitForTimeout(150);
   const cards = await p.evaluate((id) => A.STATIONS[id].cards.length, first);
@@ -47,6 +48,7 @@ const dir = path.resolve(process.argv[2] || 'courses/demo'); const url = 'file:/
   await p.evaluate(() => { const b = Array.from(document.querySelectorAll('main .stepnav button')).find(x => /practice/i.test(x.textContent)); if (b && !b.classList.contains('cur')) b.click(); }); await p.waitForTimeout(150);
   const s3 = await stem(); await go('drill'); await go('station', { id: first }); await p.waitForTimeout(150);
   log(s3 && (await stem()) === s3, 'Station practice keeps the same question after switching tabs');
+  }
   log(!errs.length, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); console.log(fails ? 'FAIL ' + fails : 'PASS'); process.exit(fails ? 1 : 0);
 })();

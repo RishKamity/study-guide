@@ -47,7 +47,7 @@ U.fmtTime = function (sec) { sec = Math.max(0, Math.round(sec)); var m = Math.fl
 /* rich text: ```fenced``` parts render as monospace code blocks (any course can put code in stems, setups, cards) */
 U.rich = function (text, cls) {
   var s = String(text === null || text === undefined ? '' : text), box = U.h('div', { class: cls || null });
-  if (s.indexOf('```') < 0) { box.appendChild(document.createTextNode(s)); return box; }
+  if (s.indexOf('```') < 0) return U.h('div', { class: cls || null }, s);   /* plain text goes through U.h, so $…$ math still typesets */
   s.split('```').forEach(function (p, i) {
     if (i % 2) { p = p.replace(/^[a-z]*\n/, '').replace(/\n+$/, ''); box.appendChild(U.h('pre', { class: 'code' }, p)); }
     else { p = p.replace(/^\s+|\s+$/g, ''); if (p) box.appendChild(U.h('div', null, p)); }

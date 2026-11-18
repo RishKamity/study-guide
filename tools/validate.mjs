@@ -106,8 +106,9 @@ if (A.FEAT.stations) examTopics.forEach(t => {
   const s = A.STATIONS[t.id]; if (!s) { FAIL(`station ${t.id}: missing (tier ${C.tier} needs a lesson per exam topic)`); return; }
   if (!s.cards || !s.cards.length) FAIL(`station ${t.id}: no cards`);
   (s.cards || []).forEach((c, j) => { if (!c.h || !Array.isArray(c.rule) || !c.rule.length) FAIL(`station ${t.id} card ${j + 1}: needs h and rule[]`); if (c.trap && c.trap.quote && !(c.trap.quote.text && c.trap.quote.lec)) WARN(`station ${t.id} card ${j + 1}: quote needs text and lec`); });
-  [s.worked, s.faded].forEach((w, k) => { if (w && (!w.setup || !Array.isArray(w.steps) || !w.steps.length)) FAIL(`station ${t.id}: ${k ? 'faded' : 'worked'} example needs setup and steps`); });
-  if (s.faded) s.faded.steps.forEach((st, j) => { if (st.ask && !(st.ask.opts && st.ask.opts[st.ask.ans] !== undefined && st.ask.why)) FAIL(`station ${t.id} faded step ${j + 1}: ask needs opts, ans, why`); });
+  /* worked and faded may each be one example or a list of them */
+  [[].concat(s.worked || []), [].concat(s.faded || [])].forEach((L, k) => L.forEach(w => { if (!w.setup || !Array.isArray(w.steps) || !w.steps.length) FAIL(`station ${t.id}: ${k ? 'faded' : 'worked'} example needs setup and steps`); }));
+  [].concat(s.faded || []).filter(f => Array.isArray(f.steps)).forEach(f => f.steps.forEach((st, j) => { if (st.ask && !(st.ask.opts && st.ask.opts[st.ask.ans] !== undefined && st.ask.why)) FAIL(`station ${t.id} faded step ${j + 1}: ask needs opts, ans, why`); }));
 });
 
 /* ---- sample exam: sealed, and never leaked into practice ---- */

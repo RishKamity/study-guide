@@ -16,6 +16,6 @@ fs.writeFileSync(path.join(out, 'items_blind.json'), JSON.stringify(items, null,
 let md = '# Lessons to audit against the course files\n\n';
 for (const [id, s] of Object.entries(A.STATIONS)) { const T = A.TOPIC[id]; if (!T) continue; md += `## ${id} ${T.title}\nIntro: ${s.intro}\n`;
   (s.cards || []).forEach(c => { md += `### ${c.h}${c.general ? ' (marked: not from course files)' : ''}\n` + [].concat(c.rule || []).map(r => '- ' + r).join('\n') + '\n'; if (c.analogy) md += 'Analogy: ' + c.analogy + '\n'; if (c.trap) md += 'Trap: ' + c.trap.t + (c.trap.quote ? ` [quote L${c.trap.quote.lec} ${c.trap.quote.ts || ''}: "${c.trap.quote.text}"]` : '') + '\n'; });
-  [['Worked', s.worked], ['Faded', s.faded]].forEach(([k, w]) => { if (w) md += `${k}: ${w.title}. ${w.setup}\n` + w.steps.map((x, i) => `${i + 1}. ${x.action} ${x.math || ''} ${x.why || ''}`).join('\n') + '\n'; }); md += '\n'; }
+  [].concat((s.worked ? [].concat(s.worked) : []).map(w => ['Worked', w]), (s.faded ? [].concat(s.faded) : []).map(w => ['Faded', w])).forEach(([k, w]) => { if (w) md += `${k}: ${w.title}. ${w.setup}\n` + w.steps.map((x, i) => `${i + 1}. ${x.action} ${x.math || ''} ${x.why || ''}`).join('\n') + '\n'; }); md += '\n'; }
 fs.writeFileSync(path.join(out, 'lessons.md'), md);
 console.log(`${items.length} blind items and ${Object.keys(A.STATIONS).length} lessons written to ${out}; key in ${path.join(K.dir, 'qa/items_key.json')}`);

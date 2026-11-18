@@ -164,11 +164,11 @@ A.STATIONS['1B'] = {
   intro: 'how many exam questions and what the key skill is',
   cards: [{ h: 'heading', rule: ['short sentences'], visual: {...} | null, hook: 'memory line' | null, analogy: '...' | null,
             trap: { t: 'the exam trap', quote: { text: 'VERBATIM lecture words', lec: 15, ts: '20:48' } | null }, general: false }],
-  worked: { title, setup, steps: [{ label, action, math, why, je }] } | null,
+  worked: { title, setup, steps: [{ label, action, math, why, je, visual }] } | [ ...several ] | null,   // a list = several worked examples in one station (faded takes a list too); a faded ask option may be a plot visual
   faded: { title, setup, steps: [{ label, action, math, ask: { q, opts: [...], ans: 0, why } }] } | null
 };
 ```
-Visual types: `code {src, note}` (a monospace code block), `table {head, rows}`, `twocol {left:{title,items}, right:{...}}`, `flow {steps, note}`, `stack {tiers}`, `je {rows:[[acct, dr, cr]], note}`, `tacct {name, left, right, end}`, `recon {bank, book, adj}`, `layers {layers:[{n,u,sold}]}`, `icons {items:[{k,t,d}]}`, `tri {corners:[{t,d,hl}]}`.
+Visual types: `code {src, note}` (a monospace code block), `table {head, rows}`, `twocol {left:{title,items}, right:{...}}`, `flow {steps, note}`, `stack {tiers}`, `je {rows:[[acct, dr, cr]], note}`, `tacct {name, left, right, end}`, `recon {bank, book, adj}`, `layers {layers:[{n,u,sold}]}`, `icons {items:[{k,t,d}]}`, `tri {corners:[{t,d,hl}]}`, `signs {pts, rows:[{name, s, at, mark:'arrow'|'cup'}], note}` (a number-line sign chart), `plot {xr, yr, f | fns, asym:[{x}|{y}|{m,c}], pts:[{x,y,label,open}], label, note}` (a graph; breaks at asymptotes and undefined points).
 
 **Code in text.** Any stem (generator, bank or sample) and any worked/faded `setup` may contain fenced blocks (three backticks, newline, code, newline, three backticks); they render as monospace code and are skipped by the audio. Options that contain a line break render monospace too. Keep code lines under about 40 characters so they fit a phone.
 

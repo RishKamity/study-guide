@@ -7,7 +7,7 @@ const setTier = (t, extra) => s => s.replace(/tier: '\w+'/, `tier: '${t}'`).repl
 (async () => {
   const b = await chromium.launch(); let ok = true; const chk = (c, m) => { if (!c) ok = false; console.log(c ? 'ok  ' : 'FAIL', m); };
   const NOW = '2026-10-26T10:00:00-04:00';
-  for (let [tier, expectTabs, extra] of [['quick', ['today', 'path', 'endless', 'drill', 'ref'], {}], ['standard', ['today', 'path', 'endless', 'drill', 'mock', 'ref'], { accent: 'teal' }], ['full', ['today', 'path', 'endless', 'drill', 'listen', 'mock', 'ref'], { accent: 'coral', daily: true }]]) {
+  for (let [tier, expectTabs, extra] of [['quick', ['today', 'path', 'endless', 'drill', 'ref', 'stats'], {}], ['standard', ['today', 'path', 'endless', 'drill', 'mock', 'ref', 'stats'], { accent: 'teal' }], ['full', ['today', 'path', 'endless', 'drill', 'listen', 'mock', 'ref', 'stats'], { accent: 'coral', daily: true }]]) {
     const url = variant(tier, setTier(tier, extra));
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.clock.install({ time: new Date(NOW) }); await p.goto(url); await p.waitForTimeout(400);

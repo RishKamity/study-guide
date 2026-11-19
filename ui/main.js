@@ -1,7 +1,7 @@
 /* main.js — shell and boot. */
 (function () {
   var h = U.h, root = document.getElementById('app');
-  var TABS = [['today', 'Today', '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'], ['path', 'Path', '<path d="M5 4v16M5 6h11l-2 3 2 3H5"/>'], ['endless', 'Endless', '<path d="M18 8a5 5 0 1 0 0 8c3 0 4-8 0-8s-5 8-8 8a5 5 0 1 1 0-8"/>'], ['drill', 'Drill', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'], ['listen', 'Listen', '<path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v6H4zM17 14h3v6h-3z"/>'], ['mock', 'Mock', '<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13l2 2 4-4"/>'], ['ref', 'Ref', '<path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6"/>']];
+  var TABS = [['today', 'Today', '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'], ['path', 'Path', '<path d="M5 4v16M5 6h11l-2 3 2 3H5"/>'], ['endless', 'Endless', '<path d="M18 8a5 5 0 1 0 0 8c3 0 4-8 0-8s-5 8-8 8a5 5 0 1 1 0-8"/>'], ['drill', 'Drill', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'], ['listen', 'Listen', '<path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v6H4zM17 14h3v6h-3z"/>'], ['mock', 'Mock', '<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13l2 2 4-4"/>'], ['ref', 'Ref', '<path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6"/>'], ['stats', 'Stats', '<path d="M4 20h16M7 16v-5M12 16V7M17 16v-8"/>']];
   var F = A.FEAT;
   TABS = TABS.filter(function (t) { return t[0] === 'mock' ? F.mocks : t[0] === 'listen' ? (F.audio && (A.AUDIO || []).length) : t[0] === 'ref' ? !!(A.REF_HTML || A.SHEET) : true; });
   U.views.endless = { tab: 'endless', hash: 'endless', render: function (m) { return U.views.session.render(m, { title: 'Endless practice' }); } };

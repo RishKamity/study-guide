@@ -101,7 +101,7 @@ Fix all HIGH and MED findings and re-run validate + smoke. (In the ACCT 200 buil
   - Full: `capabilities: {db: {}, user: {}, sample: {}, downloads: true}` (sync, AI tutor, export). Load the `artifact-capabilities` skill if you change runtime code.
   - Full with audio: pass `files` mapping `audio/<id>.mp3` -> `courses/<id>/audio/mp3/<id>.mp3` (one publish holds up to 64 MB).
 - Elsewhere, deliver `dist/index.html` (and the `audio/` folder) as files.
-- Republish to the **same URL** for every later fix. Never change `A.COURSE.id` or `storageKey` after the first publish (that would orphan the student's progress). Updates are safe while the student studies: progress lives in their browser and synced storage, not in the page, and the current question, lesson card and mock position are kept per device, so after an update the student reloads once and picks up where they were.
+- Republish to the **same URL** for every later fix. Never change `A.COURSE.id` or `storageKey` after the first publish (that would orphan the student's progress). To give a student a clean slate on request, set `resetTag: 'r1'` (next reset `'r2'`) in `course.js`: fresh progress, with the old progress kept and restorable by removing the tag. Updates are safe while the student studies: progress lives in their browser and synced storage, not in the page, and the current question, lesson card and mock position are kept per device, so after an update the student reloads once and picks up where they were.
 
 ## Phase 10: Daily puzzle (if chosen)
 

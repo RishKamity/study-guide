@@ -160,7 +160,7 @@
       if (!(window.claude && window.claude.use)) return;
       var db = await window.claude.use('db'), um = await window.claude.use('user'); if (!db || !um) return;
       var id = await um.id(); if (!id) return;
-      ref = db.doc('data/users/' + id + '/score');
+      ref = db.doc('data/users/' + id + '/' + A.DOC('score'));
       ref.onSnapshot(function (snap) {
         if (snap.hasPendingWrites || (snap.metadata && snap.metadata.hasPendingWrites)) return;
         var remote = snap.exists ? (snap.data() || {}).ev : null;

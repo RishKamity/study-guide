@@ -44,7 +44,7 @@ A.store = (function () {
       if (!dbm || !um) { setStatus('local'); return; }
       var id = await um.id(); if (!id) { setStatus('local'); return; }
       db = dbm; userId = id;
-      ref = db.doc('data/users/' + id + '/state');
+      ref = db.doc('data/users/' + id + '/' + A.DOC('state'));
       setStatus('syncing');
       var first = true;
       unsub = ref.onSnapshot(function (snap) {

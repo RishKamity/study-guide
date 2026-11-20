@@ -28,8 +28,10 @@
   A.SCORE_W = {};
   A.TOPICS.forEach(function (t) { var w = C.weights && C.weights[t.id] !== undefined ? C.weights[t.id] : t.exam; if (w) A.SCORE_W[t.id] = w; });
   /* storage keys: one prefix per course (each published guide also has its own origin) */
-  var pre = C.storageKey || C.id || 'guide';
+  /* resetTag: a fresh start. New local keys and new synced docs; the old progress stays where it was (remove the tag to get it back). */
+  var pre = (C.storageKey || C.id || 'guide') + (C.resetTag ? '-' + C.resetTag : '');
   A.KEY = function (name) { return pre + '-' + name + '-v1'; };
+  A.DOC = function (name) { return C.resetTag ? name + '-' + C.resetTag : name; };   // synced doc name under data/users/<id>/
   /* ---- accent palettes (dark + light values, contrast-checked against the app's surfaces) ---- */
   A.PALETTES = {
     lavender: { dark: ['#C4B5FD', '#A78BFA', '#0B0D10', '#DDD6FE', '#241F38'], light: ['#6D4FD6', '#5B3FC4', '#FFFFFF', '#4C32B0', '#EDE9FE'] },

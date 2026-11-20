@@ -39,6 +39,7 @@ Course packs built from real class files contain the instructor's material. Keep
 A.COURSE = {
   id: 'chem115-exam3',               // unique, stable. Never change it after publishing (progress is keyed to it).
   storageKey: 'chem3',               // optional prefix for saved progress; defaults to id. Never change after publishing.
+  resetTag: 'r1',                    // optional: start progress over (fresh local keys and synced docs; the old progress is kept). Remove it to restore.
   title: 'CHEM 115 Exam 3 Lab',      // app name (2-4 words)
   mark: 'C',                         // one letter for the logo square
   course: 'CHEM 115', exam: 'Exam 3',
